@@ -341,6 +341,35 @@ table.db-tbl td{padding:5px 10px;vertical-align:middle;}
 
 <!-- DATABASE TAB -->
 <div id="tab-db" class="panel">
+
+  <!-- ADD PLAYER CARD -->
+  <div class="card" style="margin-bottom:12px;">
+    <h2>Add New Player</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;flex-wrap:wrap;">
+      <div>
+        <label style="font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Name</label>
+        <input id="newName" class="db-search" style="width:100%;margin:0;" placeholder="e.g. Djokovic">
+      </div>
+      <div>
+        <label style="font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Hold %</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input id="newHld" type="number" min="40" max="99" step="0.1" value="82" class="inp-edit" style="width:70px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">%</span>
+        </div>
+      </div>
+      <div>
+        <label style="font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Break %</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input id="newBrk" type="number" min="1" max="50" step="0.1" value="18" class="inp-edit" style="width:70px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">%</span>
+        </div>
+      </div>
+      <button class="db-btn primary" onclick="addPlayer()" style="height:32px;white-space:nowrap;">+ Add Player</button>
+    </div>
+    <div id="addMsg" style="font-family:var(--mono);font-size:10px;margin-top:8px;height:16px;"></div>
+  </div>
+
+  <!-- PLAYER TABLE CARD -->
   <div class="card">
     <h2>Player Database</h2>
     <div class="db-toolbar">
@@ -357,13 +386,14 @@ table.db-tbl td{padding:5px 10px;vertical-align:middle;}
           <th>Break bar</th>
           <th>Edit Hold%</th>
           <th>Edit Break%</th>
+          <th></th>
         </tr></thead>
         <tbody id="dbBody"></tbody>
       </table>
     </div>
     <div class="db-actions">
-      <button class="db-btn" onclick="resetDb()">Reset All to Default</button>
-      <button class="db-btn primary" onclick="applyDb()">Apply Changes ↗</button>
+      <button class="db-btn" onclick="resetDb()">Reset to Default</button>
+      <button class="db-btn primary" onclick="applyDb()">Apply &amp; Save ↗</button>
     </div>
   </div>
 </div>
@@ -439,8 +469,7 @@ function loadRatings() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return false;
     const parsed = JSON.parse(saved);
-    // Validate: must be array of [string, number, number]
-    if (!Array.isArray(parsed) || !parsed.every(p => Array.isArray(p) && p.length >= 3)) return false;
+    if (!Array.isArray(parsed) || !parsed.every(p => Array.isArray(p) && p.length >= 3 && typeof p[0]==='string' && typeof p[1]==='number' && typeof p[2]==='number')) return false;
     PLAYERS = parsed;
     return true;
   } catch(e) { return false; }
@@ -926,20 +955,58 @@ function renderDb() {
     return dbAsc?(a[key]>b[key]?1:-1):(a[key]<b[key]?1:-1);
   });
   document.getElementById('dbCount').textContent=`${rows.length} players`;
-  const def=Object.fromEntries(DEFAULT_PLAYERS.map(p=>[p[0],[p[1],p[2]]]));
+  const defMap=Object.fromEntries(DEFAULT_PLAYERS.map(p=>[p[0],[p[1],p[2]]]));
+  const isCustom=name=>!defMap[name];
   document.getElementById('dbBody').innerHTML=rows.map(p=>{
-    const dh=def[p[0]][0],db=def[p[0]][1];
-    const modH=Math.abs(p[1]-dh)>0.0001,modB=Math.abs(p[2]-db)>0.0001;
-    return`<tr>
-      <td class="td-name">${p[0]}</td>
+    const def=defMap[p[0]];
+    const modH=def?Math.abs(p[1]-def[0])>0.0001:false;
+    const modB=def?Math.abs(p[2]-def[1])>0.0001:false;
+    const custom=isCustom(p[0]);
+    return`<tr${custom?' style="background:#f0fdf4"':''}>
+      <td class="td-name">${p[0]}${custom?'<span style="font-family:var(--mono);font-size:8px;color:var(--green);margin-left:5px;">new</span>':''}</td>
       <td class="td-mono">${(p[1]*100).toFixed(1)}%</td>
       <td class="td-mono">${(p[2]*100).toFixed(1)}%</td>
-      <td><div class="hld-bar"><div class="hld-fill" style="width:${((p[1]-0.6)/(0.95-0.6)*100).toFixed(1)}%"></div></div></td>
-      <td><div class="hld-bar"><div class="hld-fill brk-fill" style="width:${((p[2]-0.05)/(0.35-0.05)*100).toFixed(1)}%"></div></div></td>
-      <td><input class="inp-edit${modH?' mod':''}" data-n="${p[0]}" data-f="1" type="number" step="0.1" min="50" max="99" value="${(p[1]*100).toFixed(1)}" oninput="onDbEdit(this)"></td>
+      <td><div class="hld-bar"><div class="hld-fill" style="width:${Math.max(0,((p[1]-0.6)/(0.95-0.6)*100)).toFixed(1)}%"></div></div></td>
+      <td><div class="hld-bar"><div class="hld-fill brk-fill" style="width:${Math.max(0,((p[2]-0.05)/(0.35-0.05)*100)).toFixed(1)}%"></div></div></td>
+      <td><input class="inp-edit${modH?' mod':''}" data-n="${p[0]}" data-f="1" type="number" step="0.1" min="40" max="99" value="${(p[1]*100).toFixed(1)}" oninput="onDbEdit(this)"></td>
       <td><input class="inp-edit${modB?' mod':''}" data-n="${p[0]}" data-f="2" type="number" step="0.1" min="1" max="50" value="${(p[2]*100).toFixed(1)}" oninput="onDbEdit(this)"></td>
+      <td><button onclick="deletePlayer('${p[0].replace(/'/g,"\\'")}',this)" style="font-family:var(--mono);font-size:9px;padding:3px 8px;border:1px solid #fecaca;border-radius:4px;background:transparent;color:#b91c1c;cursor:pointer;" title="Remove player">✕</button></td>
     </tr>`;
   }).join('');
+}
+
+function addPlayer() {
+  const name = document.getElementById('newName').value.trim();
+  const hld  = parseFloat(document.getElementById('newHld').value);
+  const brk  = parseFloat(document.getElementById('newBrk').value);
+  const msg  = document.getElementById('addMsg');
+
+  if (!name) { msg.style.color='var(--red)'; msg.textContent='Please enter a player name.'; return; }
+  if (PLAYERS.find(p=>p[0].toLowerCase()===name.toLowerCase())) {
+    msg.style.color='var(--red)'; msg.textContent=`"${name}" already exists — edit them in the table below.`; return;
+  }
+  if (isNaN(hld)||hld<40||hld>99) { msg.style.color='var(--red)'; msg.textContent='Hold% must be between 40–99.'; return; }
+  if (isNaN(brk)||brk<1||brk>50)  { msg.style.color='var(--red)'; msg.textContent='Break% must be between 1–50.'; return; }
+
+  PLAYERS.push([name, hld/100, brk/100]);
+  saveRatings();
+  document.getElementById('newName').value='';
+  document.getElementById('newHld').value='82';
+  document.getElementById('newBrk').value='18';
+  msg.style.color='var(--green)';
+  msg.textContent=`✓ "${name}" added (Hold ${hld}%, Break ${brk}%)`;
+  setTimeout(()=>msg.textContent='', 3000);
+  renderDb();
+}
+
+function deletePlayer(name, btn) {
+  if (!confirm(`Remove "${name}" from the database?`)) return;
+  PLAYERS = PLAYERS.filter(p=>p[0]!==name);
+  // Clear selection if this player was selected
+  if (selA && selA[0]===name) clearSelection('A');
+  if (selB && selB[0]===name) clearSelection('B');
+  saveRatings();
+  renderDb();
 }
 
 function onDbEdit(inp) {
