@@ -3,265 +3,407 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MarchLines 2026</title>
+<title>AceSim · Tennis Match Simulator</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f4f2ed;--bg2:#eceae4;--surface:#fff;--sf2:#f8f7f3;
-  --border:#dbd9d2;--border2:#c8c5bc;
-  --text:#1a1917;--text2:#4a4845;--muted:#8a8780;
-  --navy:#1e3a5f;--navy2:#2d5282;
-  --teal:#0d7377;--green:#1a6b3c;--red:#b91c1c;
+  --bg:#f2f4f0;--bg2:#e8ebe4;--surface:#fff;--sf2:#f7f8f5;
+  --border:#dde0d8;--border2:#c8ccc2;
+  --text:#1c1f18;--text2:#4a4f42;--muted:#8a9082;
+  --p1:#1e40af;--p2:#6b21a8;
+  --green:#166534;--red:#b91c1c;--teal:#0d7377;
+  --court:#2d5a27;
   --mono:'JetBrains Mono',monospace;
   --sans:'Inter',sans-serif;
   --display:'Playfair Display',serif;
-  --sh:0 1px 3px rgba(0,0,0,.08);--sh2:0 4px 12px rgba(0,0,0,.08);
+  --sh:0 1px 3px rgba(0,0,0,.07);--sh2:0 4px 16px rgba(0,0,0,.09);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
 
 header{
-  background:var(--navy);padding:0 28px;
-  display:flex;align-items:stretch;justify-content:space-between;gap:0;flex-wrap:wrap;
-  position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.15);
+  background:var(--court);padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);position:sticky;top:0;z-index:100;
 }
-.logo-block{display:flex;align-items:center;padding:14px 0;border-right:1px solid rgba(255,255,255,.1);padding-right:20px;}
-.logo{font-family:var(--display);font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px;}
-.logo em{color:#7dd3fc;font-style:normal;}
-.logo-sub{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+.logo{font-family:var(--display);font-size:22px;font-weight:900;color:#fff;}
+.logo em{color:#a8d5b5;font-style:normal;}
+.logo-sub{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin-top:1px;}
+.surf-seg{display:flex;background:rgba(0,0,0,.2);border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.1);}
+.surf-btn{padding:5px 11px;border:none;background:transparent;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;}
+.surf-btn.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600;}
 
-.header-tabs{display:flex;align-items:stretch;gap:0;flex:1;padding-left:6px;}
-.tab-btn{padding:0 18px;border:none;background:transparent;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;border-bottom:3px solid transparent;transition:all .15s;}
-.tab-btn:hover{color:rgba(255,255,255,.75);}
-.tab-btn.active{color:#fff;border-bottom-color:#7dd3fc;}
+/* TABS */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 24px;}
+.tab-btn{padding:10px 18px;border:none;background:transparent;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid transparent;transition:all .15s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--court);border-bottom-color:var(--court);font-weight:600;}
 
-.header-right{display:flex;align-items:center;gap:10px;padding:10px 0 10px 20px;border-left:1px solid rgba(255,255,255,.1);flex-wrap:wrap;}
-.tourn-seg{display:flex;align-items:center;gap:8px;}
-.tourn-lbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;}
-.switch{position:relative;display:inline-block;width:34px;height:18px;}
-.switch input{opacity:0;width:0;height:0;}
-.knob{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.15);border-radius:18px;cursor:pointer;transition:.2s;}
-.knob:before{position:absolute;content:"";height:12px;width:12px;left:3px;bottom:3px;background:rgba(255,255,255,.5);border-radius:50%;transition:.2s;}
-input:checked+.knob{background:#7dd3fc;}
-input:checked+.knob:before{transform:translateX(16px);background:#fff;}
-.pen-row{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);}
-.pen-row input[type=range]{width:60px;accent-color:#7dd3fc;cursor:pointer;}
-.pen-val{color:#7dd3fc;min-width:24px;}
-
-/* TOOLBAR */
-.toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 28px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-.f-btn{background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:9px;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.07em;}
-.f-btn:hover{border-color:var(--navy);color:var(--navy);}
-.f-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600;}
-.tb-sep{width:1px;height:18px;background:var(--border);margin:0 3px;}
-
-.main{padding:20px 28px;}
+.main{max-width:960px;margin:0 auto;padding:20px 16px;}
 .panel{display:none;}.panel.active{display:block;}
 
-/* DAY HEADER */
-.day-hdr{display:flex;align-items:center;gap:14px;margin:24px 0 12px;}
-.day-hdr:first-child{margin-top:0;}
-.day-hdr h2{font-family:var(--display);font-size:19px;font-weight:700;color:var(--navy);white-space:nowrap;}
-.day-line{flex:1;height:1px;background:var(--border);}
-.day-cnt{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--sh);margin-bottom:12px;}
+.card h2{font-family:var(--display);font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px;}
+.card h3{font-family:var(--display);font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px;}
 
-.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;}
+/* PLAYER GRID */
+.pgrid{display:grid;grid-template-columns:1fr 32px 1fr;gap:8px;align-items:start;margin-bottom:16px;}
+.vs-c{display:flex;align-items:center;justify-content:center;padding-top:28px;font-family:var(--display);font-size:15px;color:var(--muted);font-weight:700;}
+.pc{background:var(--sf2);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.pc.pc1{border-top:3px solid var(--p1);}.pc.pc2{border-top:3px solid var(--p2);}
+.pc label{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;}
 
-/* CARD */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s,transform .15s;}
-.card:hover{box-shadow:var(--sh2);transform:translateY(-1px);}
-.card-head{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;background:var(--sf2);border-bottom:1px solid var(--border);gap:8px;}
-.rtag{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;padding:2px 7px;border-radius:3px;}
-.rE{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;}
-.rW{background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;}
-.rM{background:#fef9c3;color:#713f12;border:1px solid #fde68a;}
-.rS{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;}
-.cloc{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:right;line-height:1.5;}
+/* PLAYER SEARCH */
+.search-wrap{position:relative;margin-bottom:10px;}
+.player-search{width:100%;padding:7px 9px;border:1px solid var(--border2);border-radius:6px;font-family:var(--sans);font-size:13px;background:var(--surface);color:var(--text);}
+.player-search:focus{outline:none;border-color:var(--p1);}
+.dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:var(--sh2);max-height:200px;overflow-y:auto;z-index:50;display:none;}
+.dropdown.open{display:block;}
+.dd-item{padding:8px 10px;cursor:pointer;font-size:12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);gap:8px;}
+.dd-item:hover{background:var(--sf2);}
+.dd-name{font-weight:500;color:var(--text);}
+.dd-stats{font-family:var(--mono);font-size:9px;color:var(--muted);}
+.selected-player{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;font-size:12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.selected-player:hover{border-color:var(--border2);}
+.sp-name{font-weight:600;color:var(--text);}
+.sp-stats{font-family:var(--mono);font-size:10px;color:var(--muted);}
 
-.card-teams{padding:10px 12px 8px;}
-.trow{display:flex;align-items:center;gap:8px;padding:4px 0;}
-.trow+.trow{border-top:1px solid var(--border);margin-top:3px;padding-top:7px;}
-.sb{font-family:var(--mono);font-size:10px;font-weight:600;width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.sd1{background:#dbeafe;color:#1e40af;}.sd2{background:#d1fae5;color:#065f46;}
-.sd3{background:#fef3c7;color:#92400e;}.sd5{background:#f3f4f6;color:#374151;}
-.sd9{background:#f9fafb;color:#9ca3af;}.sd12{background:#fdf4ff;color:#6b21a8;}
-.sd15{background:#fef2f2;color:#991b1b;}
-.tname{font-size:13px;font-weight:500;color:var(--text);flex:1;}
-.tname.fav{color:var(--navy);font-weight:600;}
-.tstats{font-family:var(--mono);font-size:8.5px;color:var(--muted);text-align:right;}
-.tpts{font-family:var(--mono);font-size:19px;font-weight:600;min-width:40px;text-align:right;}
-.tpts.win{color:var(--teal);}.tpts.los{color:var(--muted);}
+/* MANUAL HOLD OVERRIDE */
+.override-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.override-label{font-family:var(--mono);font-size:9px;color:var(--muted);flex:1;}
+.override-inp{width:60px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:600;text-align:right;background:var(--surface);color:var(--text);}
+.override-inp:focus{outline:none;border-color:var(--teal);}
+.override-inp.manual{border-color:var(--teal);background:#f0fdfa;}
 
-.out-bar{display:flex;background:var(--navy);border-top:1px solid var(--border);}
-.ob{flex:1;text-align:center;padding:8px 4px;position:relative;}
-.ob+.ob::before{content:'';position:absolute;left:0;top:15%;height:70%;width:1px;background:rgba(255,255,255,.12);}
-.ob-lbl{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:2px;}
-.ob-val{font-family:var(--mono);font-size:14px;font-weight:600;color:#fff;}
-.ob-val.spread{color:#7dd3fc;}.ob-val.total{color:#6ee7b7;}.ob-val.tempo{color:#fde68a;}
-.ob-sub{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.35);margin-top:1px;}
-.adj-strip{padding:4px 12px;background:#eff6ff;border-top:1px solid #bfdbfe;font-family:var(--mono);font-size:8.5px;color:#1e40af;text-align:center;}
+/* MATCH HOLD DISPLAY */
+.match-hold-bar{
+  background:var(--sf2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;margin-bottom:14px;
+  display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.mh-item{text-align:center;flex:1;}
+.mh-label{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px;}
+.mh-val{font-family:var(--mono);font-size:15px;font-weight:700;}
+.mh-val.c1{color:var(--p1);}.mh-val.c2{color:var(--p2);}.mh-val.cn{color:var(--text2);}
+.mh-sub{font-family:var(--mono);font-size:8.5px;color:var(--muted);margin-top:1px;}
+.mh-sep{width:1px;height:36px;background:var(--border);}
 
-/* RATINGS EDITOR */
-.ed-wrap{max-width:800px;margin:0 auto;}
-.ed-note{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;line-height:1.6;}
-.ed-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
-.ed-search{flex:1;min-width:160px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--text);}
-.ed-search:focus{outline:none;border-color:var(--navy);}
-.ed-btn{padding:7px 14px;border:1px solid var(--border2);border-radius:6px;font-family:var(--mono);font-size:9px;background:var(--surface);color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;}
-.ed-btn:hover{border-color:var(--red);color:var(--red);}
-.ed-btn.save{background:var(--navy);border-color:var(--navy);color:#fff;}
-.ed-btn.save:hover{background:var(--navy2);}
-.ed-tbl-wrap{overflow-x:auto;}
-table.ed-tbl{width:100%;border-collapse:collapse;font-size:12px;}
-table.ed-tbl thead th{padding:7px 10px;text-align:left;font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:2px solid var(--border2);background:var(--sf2);white-space:nowrap;}
-table.ed-tbl tbody tr{border-bottom:1px solid var(--border);}
-table.ed-tbl tbody tr:hover{background:var(--sf2);}
-table.ed-tbl td{padding:5px 10px;vertical-align:middle;}
-.td-name{font-weight:500;color:var(--text);}
-.td-conf{font-family:var(--mono);font-size:10px;color:var(--muted);}
-.td-seed{font-family:var(--mono);font-size:10px;}
-input.n-inp{width:68px;padding:4px 7px;border:1px solid var(--border);border-radius:4px;font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--text);text-align:right;transition:border-color .15s;}
-input.n-inp:focus{outline:none;border-color:var(--navy);}
-input.n-inp.dirty{border-color:var(--teal);background:#f0fdf4;font-weight:600;}
+/* SETTINGS */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.sb{background:var(--sf2);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.sb h3{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;}
+.srow{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.srow-label{font-family:var(--mono);font-size:9px;color:var(--text2);flex:1;line-height:1.3;}
+.srow-wrap{display:flex;align-items:center;gap:5px;}
+input[type=range]{width:80px;accent-color:var(--teal);cursor:pointer;}
+.sv{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--teal);min-width:36px;text-align:right;}
+.fmt-seg{display:flex;background:var(--surface);border:1px solid var(--border2);border-radius:6px;overflow:hidden;margin-bottom:8px;}
+.fmt-btn{flex:1;padding:5px 8px;border:none;background:transparent;font-family:var(--mono);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;}
+.fmt-btn:hover{background:var(--bg2);}
+.fmt-btn.active{background:var(--court);color:#fff;font-weight:600;}
+.sim-cnt-sel{width:100%;padding:6px 9px;border:1px solid var(--border2);border-radius:6px;font-family:var(--mono);font-size:10px;background:var(--surface);color:var(--text);margin-bottom:10px;cursor:pointer;}
+.run-btn{width:100%;padding:9px;border:none;border-radius:8px;background:var(--court);color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:all .15s;}
+.run-btn:hover{background:#234d1e;transform:translateY(-1px);}
+.run-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.prog-wrap{display:none;margin-top:8px;}
+.prog-track{height:3px;background:var(--bg2);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--teal);border-radius:2px;transition:width .1s;}
+.prog-lbl{font-family:var(--mono);font-size:8.5px;color:var(--muted);margin-top:3px;text-align:center;}
 
-/* CUSTOM MATCHUP */
-.cust-wrap{max-width:760px;margin:0 auto;}
-.cust-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;box-shadow:var(--sh2);}
-.cust-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;margin-bottom:18px;}
-.vs-c{display:flex;align-items:center;justify-content:center;padding-top:30px;font-family:var(--display);font-size:16px;color:var(--muted);font-weight:700;}
-.cpick label{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;}
-.cpick select{width:100%;padding:7px 9px;border:1px solid var(--border2);border-radius:6px;font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--text);cursor:pointer;}
-.cpick select:focus{outline:none;border-color:var(--navy);}
-.cstats{margin-top:7px;padding:8px 10px;background:var(--sf2);border-radius:6px;border:1px solid var(--border);font-family:var(--mono);font-size:9.5px;color:var(--muted);line-height:1.8;}
-.cstats b{color:var(--text2);}
+/* RESULTS */
+#results{animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 
-.cres{display:grid;grid-template-columns:repeat(3,1fr);background:var(--navy);border-radius:10px;overflow:hidden;margin-bottom:14px;}
-.cr{padding:14px;text-align:center;position:relative;}
-.cr+.cr::before{content:'';position:absolute;left:0;top:15%;height:70%;width:1px;background:rgba(255,255,255,.12);}
-.cr-lbl{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:3px;}
-.cr-val{font-family:var(--mono);font-size:20px;font-weight:600;color:#fff;}
-.cr-val.cs{color:#7dd3fc;}.cr-val.ct{color:#6ee7b7;}.cr-val.cp{color:#fde68a;}
-.cr-sub{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);margin-top:2px;}
-.score-row{display:flex;justify-content:center;align-items:center;gap:18px;padding:14px 0;border-top:1px solid var(--border);}
-.sc-team{text-align:center;}
-.sc-name{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:3px;}
-.sc-pts{font-family:var(--mono);font-size:32px;font-weight:600;}
-.sc-pts.win{color:var(--teal);}.sc-pts.los{color:var(--muted);}
-.sc-vs{font-family:var(--display);font-size:13px;color:var(--muted);}
-.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
-.wc{background:var(--sf2);border:1px solid var(--border);border-radius:8px;padding:11px;}
-.wc h4{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:7px;}
-.wr{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;}
-.wr:last-child{border-bottom:none;}
-.wl{color:var(--muted);}.wv{font-weight:500;color:var(--text);}
+.prob-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:var(--sh);}
+.prob-header{display:flex;justify-content:space-between;margin-bottom:5px;}
+.ph-n{font-size:13px;font-weight:600;}.ph-n.c1{color:var(--p1);}.ph-n.c2{color:var(--p2);}
+.prob-pcts{display:flex;justify-content:space-between;margin-bottom:5px;}
+.pp{font-family:var(--mono);font-size:22px;font-weight:700;}
+.pp.c1{color:var(--p1);}.pp.c2{color:var(--p2);}
+.pp-odds{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px;}
+.prob-track{height:9px;background:var(--bg2);border-radius:5px;overflow:hidden;margin-bottom:3px;}
+.prob-fill{height:100%;background:linear-gradient(90deg,var(--p1),var(--p2));border-radius:5px;transition:width .4s;}
+.prob-sub{font-family:var(--mono);font-size:8.5px;color:var(--muted);text-align:center;}
 
-@media(max-width:640px){
-  header,.main,.toolbar{padding-left:14px;padding-right:14px;}
-  .games-grid{grid-template-columns:1fr;}
-  .cust-grid{grid-template-columns:1fr;}
-  .vs-c{padding-top:0;}
-  .work-grid{grid-template-columns:1fr;}
-  .logo{font-size:18px;}
-  .header-tabs{display:none;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;box-shadow:var(--sh);}
+.sc-lbl{font-family:var(--mono);font-size:7.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px;}
+.sc-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);}
+.sc-sub{font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:1px;}
+
+.tables-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.dist-row{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+.dr-lbl{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text);width:60px;flex-shrink:0;}
+.dr-track{flex:1;height:13px;background:var(--bg2);border-radius:2px;overflow:hidden;}
+.dr-fill{height:100%;border-radius:2px;transition:width .3s;}
+.fp1{background:#bfdbfe;}.fp2{background:#e9d5ff;}.fneu{background:#a7f3d0;}.ftop{background:#fde68a;}
+.dr-pct{font-family:var(--mono);font-size:9px;color:var(--muted);width:34px;text-align:right;flex-shrink:0;}
+.dr-odds{font-family:var(--mono);font-size:9px;color:var(--text2);width:38px;text-align:right;flex-shrink:0;}
+
+.ou-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.ou-col h4{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:7px;}
+.ou-row{display:flex;justify-content:space-between;gap:6px;padding:3px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9.5px;}
+.ou-row:last-child{border-bottom:none;}
+.ou-line{color:var(--text2);}.ou-pct{font-weight:600;}.ou-am{color:var(--muted);}
+
+.fs-dist-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.marg-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:5px;margin-top:4px;}
+.mc{background:var(--sf2);border:1px solid var(--border);border-radius:6px;padding:7px;text-align:center;}
+.mc-lbl{font-family:var(--mono);font-size:8px;color:var(--muted);margin-bottom:1px;}
+.mc-val{font-family:var(--mono);font-size:13px;font-weight:700;}
+.mc-odds{font-family:var(--mono);font-size:8.5px;color:var(--muted);}
+
+/* DB TABLE */
+.db-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.db-search{flex:1;min-width:160px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--text);}
+.db-search:focus{outline:none;border-color:var(--court);}
+.db-wrap{overflow-x:auto;}
+table.db-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+table.db-tbl thead th{padding:7px 10px;text-align:left;font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:2px solid var(--border2);background:var(--sf2);white-space:nowrap;cursor:pointer;}
+table.db-tbl thead th:hover{color:var(--text);}
+table.db-tbl tbody tr{border-bottom:1px solid var(--border);}
+table.db-tbl tbody tr:hover{background:var(--sf2);}
+table.db-tbl td{padding:5px 10px;vertical-align:middle;}
+.td-name{font-weight:600;color:var(--text);}
+.td-mono{font-family:var(--mono);font-size:10px;}
+.hld-bar{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;width:60px;}
+.hld-fill{height:100%;background:#bfdbfe;border-radius:3px;}
+.brk-fill{background:#e9d5ff;}
+.inp-edit{width:62px;padding:3px 6px;border:1px solid var(--border2);border-radius:4px;font-family:var(--mono);font-size:10px;text-align:right;background:var(--surface);color:var(--text);}
+.inp-edit:focus{outline:none;border-color:var(--teal);}
+.inp-edit.mod{border-color:var(--teal);background:#f0fdfa;}
+.db-actions{display:flex;gap:6px;margin-top:10px;}
+.db-btn{padding:6px 14px;border:1px solid var(--border2);border-radius:6px;font-family:var(--mono);font-size:9px;background:var(--surface);color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;}
+.db-btn:hover{border-color:var(--court);color:var(--court);}
+.db-btn.primary{background:var(--court);border-color:var(--court);color:#fff;}
+.db-btn.primary:hover{background:#234d1e;}
+
+.loading-msg{text-align:center;padding:36px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+
+@media(max-width:600px){
+  .pgrid{grid-template-columns:1fr;}.vs-c{padding-top:0;}
+  .settings-grid{grid-template-columns:1fr;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .tables-grid,.ou-grid,.fs-dist-grid{grid-template-columns:1fr;}
+  header,.main{padding-left:12px;padding-right:12px;}
+  .tab-bar{padding:0 12px;}
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo-block">
-    <div>
-      <div class="logo">March<em>Lines</em> <span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);font-weight:400">2026</span></div>
-      <div class="logo-sub">First Round · Mar 19–20</div>
-    </div>
+  <div>
+    <div class="logo">Ace<em>Sim</em></div>
+    <div class="logo-sub">Tennis Match Simulator · v3</div>
   </div>
-  <div class="header-tabs">
-    <button class="tab-btn active" onclick="showPanel('games',this)">Games</button>
-    <button class="tab-btn" onclick="showPanel('custom',this)">Custom Matchup</button>
-    <button class="tab-btn" onclick="showPanel('editor',this)">Edit Ratings</button>
-  </div>
-  <div class="header-right">
-    <div class="tourn-seg">
-      <span class="tourn-lbl">Tourn</span>
-      <label class="switch"><input type="checkbox" id="tMode" checked onchange="recalcAll()"><span class="knob"></span></label>
-      <span id="modeLabel" style="font-family:var(--mono);font-size:9px;color:#7dd3fc;">ON</span>
-      <div class="pen-row">
-        <input type="range" id="penSlider" min="0" max="5" step="0.5" value="2.5" oninput="updatePen()">
-        <span class="pen-val" id="penVal">−2.5</span>
-      </div>
-    </div>
+  <div class="surf-seg">
+    <button class="surf-btn active" onclick="setSurface('hard',this)">Hard</button>
+    <button class="surf-btn" onclick="setSurface('clay',this)">Clay</button>
+    <button class="surf-btn" onclick="setSurface('grass',this)">Grass</button>
   </div>
 </header>
 
-<div class="toolbar" id="toolbar">
-  <button class="f-btn active" onclick="setFilter('all',this)">All</button>
-  <button class="f-btn" onclick="setFilter('Thu',this)">Thu Mar 19</button>
-  <button class="f-btn" onclick="setFilter('Fri',this)">Fri Mar 20</button>
-  <div class="tb-sep"></div>
-  <button class="f-btn" onclick="setFilter('East',this)">East</button>
-  <button class="f-btn" onclick="setFilter('West',this)">West</button>
-  <button class="f-btn" onclick="setFilter('Midwest',this)">Midwest</button>
-  <button class="f-btn" onclick="setFilter('South',this)">South</button>
-  <div class="tb-sep"></div>
-  <button class="f-btn active" id="s-def" onclick="setSort('default',this)">Default</button>
-  <button class="f-btn" onclick="setSort('total-desc',this)">Total ↓</button>
-  <button class="f-btn" onclick="setSort('total-asc',this)">Total ↑</button>
-  <button class="f-btn" onclick="setSort('spread-asc',this)">Closest</button>
-  <button class="f-btn" onclick="setSort('spread-desc',this)">Biggest</button>
-  <button class="f-btn" onclick="setSort('tempo-desc',this)">Fastest</button>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('sim',this)">Simulate</button>
+  <button class="tab-btn" onclick="showTab('db',this)">Player Database</button>
 </div>
 
 <div class="main">
 
-<!-- GAMES -->
-<div id="panel-games" class="panel active">
-  <div id="gamesContent"></div>
-</div>
+<!-- SIMULATE TAB -->
+<div id="tab-sim" class="panel active">
 
-<!-- CUSTOM MATCHUP -->
-<div id="panel-custom" class="panel">
-  <div class="cust-wrap">
-    <div class="cust-card">
-      <div class="cust-grid">
-        <div class="cpick">
-          <label>Team A</label>
-          <select id="custA" onchange="updateCustom()"></select>
-          <div class="cstats" id="cstatsA"></div>
+  <div class="card">
+    <h2>Match Setup</h2>
+
+    <!-- PLAYER PICKERS -->
+    <div class="pgrid">
+      <div class="pc pc1">
+        <label>Player A</label>
+        <div class="search-wrap">
+          <input class="player-search" id="searchA" placeholder="Search player..." oninput="openDropdown('A')" onfocus="openDropdown('A')" autocomplete="off">
+          <div class="dropdown" id="ddA"></div>
         </div>
-        <div class="vs-c">vs</div>
-        <div class="cpick">
-          <label>Team B</label>
-          <select id="custB" onchange="updateCustom()"></select>
-          <div class="cstats" id="cstatsB"></div>
+        <div id="selA" class="selected-player" style="display:none">
+          <div style="flex:1;">
+            <input id="selNameA" style="font-size:13px;font-weight:600;color:var(--p1);border:none;background:transparent;width:100%;font-family:var(--sans);padding:0;cursor:text;" value="—" oninput="onNameEdit('A')">
+            <div class="sp-stats" id="selStatsA"></div>
+          </div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;flex-shrink:0;" onclick="clearSelection('A')">✕</span>
+        </div>
+        <div class="override-row">
+          <span class="override-label">Override match hold%</span>
+          <input class="override-inp" id="overrideA" type="number" min="10" max="99" step="0.1" placeholder="auto" oninput="onOverride('A')">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">%</span>
         </div>
       </div>
-      <div class="cres" id="custResult"></div>
-      <div class="score-row" id="custScore"></div>
-      <div class="work-grid" id="custWork"></div>
+      <div class="vs-c">vs</div>
+      <div class="pc pc2">
+        <label>Player B</label>
+        <div class="search-wrap">
+          <input class="player-search" id="searchB" placeholder="Search player..." oninput="openDropdown('B')" onfocus="openDropdown('B')" autocomplete="off">
+          <div class="dropdown" id="ddB"></div>
+        </div>
+        <div id="selB" class="selected-player" style="display:none">
+          <div style="flex:1;">
+            <input id="selNameB" style="font-size:13px;font-weight:600;color:var(--p2);border:none;background:transparent;width:100%;font-family:var(--sans);padding:0;cursor:text;" value="—" oninput="onNameEdit('B')">
+            <div class="sp-stats" id="selStatsB"></div>
+          </div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;flex-shrink:0;" onclick="clearSelection('B')">✕</span>
+        </div>
+        <div class="override-row">
+          <span class="override-label">Override match hold%</span>
+          <input class="override-inp" id="overrideB" type="number" min="10" max="99" step="0.1" placeholder="auto" oninput="onOverride('B')">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MATCH HOLD DISPLAY -->
+    <div class="match-hold-bar" id="mhBar">
+      <div class="mh-item">
+        <div class="mh-label">Player A match hold%</div>
+        <div class="mh-val c1" id="mhA">—</div>
+        <div class="mh-sub" id="mhAFormula">select player</div>
+      </div>
+      <div class="mh-sep"></div>
+      <div class="mh-item" style="min-width:160px;">
+        <div class="mh-label">Court Factor (both players)</div>
+        <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin:4px 0;">
+          <input type="range" id="courtFactor" min="-10" max="10" step="0.5" value="0"
+            oninput="onCourtFactor()" style="width:90px;accent-color:var(--teal);cursor:pointer;">
+          <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--teal);min-width:42px;text-align:left;" id="cfVal">0.0%</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-align:center;">hld − oppBrk + 18.5% ± CF</div>
+      </div>
+      <div class="mh-sep"></div>
+      <div class="mh-item">
+        <div class="mh-label">Player B match hold%</div>
+        <div class="mh-val c2" id="mhB">—</div>
+        <div class="mh-sub" id="mhBFormula">select player</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="settings-grid">
+      <div class="sb">
+        <h3>Momentum (per set won)</h3>
+        <div class="srow">
+          <span class="srow-label">A wins set → A boost</span>
+          <div class="srow-wrap"><input type="range" id="momAwin" min="0" max="0.05" step="0.001" value="0.012" oninput="updSl('momAwin','sv_momAwin','+')"><span class="sv" id="sv_momAwin">+1.2%</span></div>
+        </div>
+        <div class="srow">
+          <span class="srow-label">A wins set → B penalty</span>
+          <div class="srow-wrap"><input type="range" id="momAwinB" min="0" max="0.05" step="0.001" value="0.012" oninput="updSl('momAwinB','sv_momAwinB','−')"><span class="sv" id="sv_momAwinB">−1.2%</span></div>
+        </div>
+        <div class="srow">
+          <span class="srow-label">B wins set → B boost</span>
+          <div class="srow-wrap"><input type="range" id="momBwin" min="0" max="0.05" step="0.001" value="0.016" oninput="updSl('momBwin','sv_momBwin','+')"><span class="sv" id="sv_momBwin">+1.6%</span></div>
+        </div>
+        <div class="srow">
+          <span class="srow-label">B wins set → A penalty</span>
+          <div class="srow-wrap"><input type="range" id="momBwinA" min="0" max="0.05" step="0.001" value="0.016" oninput="updSl('momBwinA','sv_momBwinA','−')"><span class="sv" id="sv_momBwinA">−1.6%</span></div>
+        </div>
+        <div class="srow">
+          <span class="srow-label">Break penalty (loser)</span>
+          <div class="srow-wrap"><input type="range" id="breakPen" min="0" max="0.02" step="0.0005" value="0.008" oninput="updSl('breakPen','sv_breakPen','')"><span class="sv" id="sv_breakPen">0.8%</span></div>
+        </div>
+        <div class="srow">
+          <span class="srow-label">Hold bounce (winner)</span>
+          <div class="srow-wrap"><input type="range" id="holdBounce" min="0" max="0.005" step="0.0001" value="0.001" oninput="updSl('holdBounce','sv_holdBounce','+')"><span class="sv" id="sv_holdBounce">+0.1%</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button onclick="resetMom()" style="font-family:var(--mono);font-size:8.5px;padding:4px 9px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.04em;">Reset</button>
+          <button onclick="zeroMom()" style="font-family:var(--mono);font-size:8.5px;padding:4px 9px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.04em;">No momentum</button>
+        </div>
+      </div>
+      <div class="sb">
+        <h3>Match Format</h3>
+        <div class="fmt-seg">
+          <button class="fmt-btn active" onclick="setFmt('bo3',this)">Best of 3</button>
+          <button class="fmt-btn" onclick="setFmt('bo5',this)">Best of 5</button>
+        </div>
+        <h3 style="margin-top:10px;">Final Set</h3>
+        <div class="fmt-seg">
+          <button class="fmt-btn active" onclick="setFS('tb',this)">Tiebreak</button>
+          <button class="fmt-btn" onclick="setFS('tb10',this)">Super TB</button>
+          <button class="fmt-btn" onclick="setFS('adv',this)">Advantage</button>
+        </div>
+        <h3 style="margin-top:10px;">Simulations</h3>
+        <select class="sim-cnt-sel" id="simCount">
+          <option value="10000">10,000</option>
+          <option value="50000" selected>50,000</option>
+          <option value="100000">100,000</option>
+        </select>
+        <button class="run-btn" id="runBtn" onclick="runSim()">▶ Run Simulation</button>
+        <div class="prog-wrap" id="progWrap">
+          <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+          <div class="prog-lbl" id="progLbl"></div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <div id="results"></div>
 </div>
 
-<!-- RATINGS EDITOR -->
-<div id="panel-editor" class="panel">
-  <div class="ed-wrap">
-    <div class="ed-note">
-      Edit any rating below — changes take effect immediately on all projections. Edited values are saved in your browser and persist across sessions. When you change a value the original is gone for good — use Reset to restore defaults.
+<!-- DATABASE TAB -->
+<div id="tab-db" class="panel">
+
+  <!-- ADD PLAYER CARD -->
+  <div class="card" style="margin-bottom:12px;">
+    <h2>Add New Player</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;flex-wrap:wrap;">
+      <div>
+        <label style="font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Name</label>
+        <input id="newName" class="db-search" style="width:100%;margin:0;" placeholder="e.g. Djokovic">
+      </div>
+      <div>
+        <label style="font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Hold %</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input id="newHld" type="number" min="40" max="99" step="0.1" value="82" class="inp-edit" style="width:70px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">%</span>
+        </div>
+      </div>
+      <div>
+        <label style="font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Break %</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input id="newBrk" type="number" min="1" max="50" step="0.1" value="18" class="inp-edit" style="width:70px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">%</span>
+        </div>
+      </div>
+      <button class="db-btn primary" onclick="addPlayer()" style="height:32px;white-space:nowrap;">+ Add Player</button>
     </div>
-    <div class="ed-toolbar">
-      <input class="ed-search" id="edSearch" placeholder="Search team..." oninput="filterEditor()">
-      <button class="ed-btn" onclick="resetRatings()">Reset All to Default</button>
-      <button class="ed-btn" onclick="downloadCSV()" style="border-color:#0d7377;color:#0d7377;">⬇ Download CSV</button>
-      <button class="ed-btn save" onclick="saveAndApply()">Save &amp; Apply ↗</button>
+    <div id="addMsg" style="font-family:var(--mono);font-size:10px;margin-top:8px;height:16px;"></div>
+  </div>
+
+  <!-- PLAYER TABLE CARD -->
+  <div class="card">
+    <h2>Player Database</h2>
+    <div class="db-toolbar">
+      <input class="db-search" id="dbSearch" placeholder="Search player..." oninput="filterDb()">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted);align-self:center;" id="dbCount"></span>
     </div>
-    <div class="ed-tbl-wrap">
-      <table class="ed-tbl">
+    <div class="db-wrap">
+      <table class="db-tbl" id="dbTable">
         <thead><tr>
-          <th>Team</th><th>Conf</th><th>Seed</th>
-          <th>OrtG</th><th>DrtG</th><th>Tempo</th><th>Net Rtg</th>
+          <th onclick="sortDb('name')">Player ↕</th>
+          <th onclick="sortDb('hld')">Hold% ↕</th>
+          <th onclick="sortDb('brk')">Break% ↕</th>
+          <th>Hold bar</th>
+          <th>Break bar</th>
+          <th>Edit Hold%</th>
+          <th>Edit Break%</th>
+          <th></th>
         </tr></thead>
-        <tbody id="edBody"></tbody>
+        <tbody id="dbBody"></tbody>
       </table>
+    </div>
+    <div class="db-actions">
+      <button class="db-btn" onclick="resetDb()">Reset to Default</button>
+      <button class="db-btn primary" onclick="applyDb()">Apply &amp; Save ↗</button>
     </div>
   </div>
 </div>
@@ -269,439 +411,718 @@ input.n-inp.dirty{border-color:var(--teal);background:#f0fdf4;font-weight:600;}
 </div><!-- /main -->
 
 <script>
-// ═══════════════════════════
-//  CONSTANTS
-// ═══════════════════════════
-const LG_OE = 107.28, LG_DE = 107.28, LG_T = 67.38;
-const STORAGE_KEY = 'marchlines_ratings_v1';
-
-// ═══════════════════════════
-//  RATINGS  [ortg, drtg, tempo, conf, seed, region]
-//  Blended values — single source of truth
-// ═══════════════════════════
-const DEFAULTS = {
-  "Duke":          [128.97,89.56,65.55,"ACC",1,"East"],
-  "Michigan":      [128.01,89.73,71.06,"B10",1,"Midwest"],
-  "Arizona":       [127.71,90.3,69.91,"B12",1,"West"],
-  "Florida":       [125.81,91.98,70.45,"SEC",1,"South"],
-  "Houston":       [126.04,91.4,63.71,"B12",2,"South"],
-  "Illinois":      [131.57,98.66,65.61,"B10",3,"South"],
-  "Iowa St.":      [123.79,92.02,66.73,"B12",2,"West"],
-  "Purdue":        [132.44,100.33,64.42,"B10",2,"West"],
-  "Connecticut":   [122.55,94.53,64.49,"BE",2,"East"],
-  "Vanderbilt":    [127.12,99.31,68.89,"SEC",5,"South"],
-  "Gonzaga":       [121.14,93.96,68.77,"WCC",3,"West"],
-  "Texas Tech":    [125.65,99.30,66.31,"B12",5,"Midwest"],
-  "Michigan St.":  [122.94,95.43,65.99,"B10",3,"East"],
-  "Virginia":      [122.38,95.81,65.64,"ACC",3,"Midwest"],
-  "St. John's":    [119.97,94.16,69.60,"BE",5,"East"],
-  "Tennessee":     [121.31,95.27,65.11,"SEC",6,"Midwest"],
-  "Louisville":    [124.06,98.38,69.66,"ACC",6,"East"],
-  "Alabama":       [129.25,103.05,73.08,"SEC",4,"Midwest"],
-  "Arkansas":      [127.82,101.63,70.98,"SEC",4,"West"],
-  "Nebraska":      [117.88,92.94,66.76,"B10",4,"South"],
-  "Wisconsin":     [126.24,101.82,68.69,"B10",5,"West"],
-  "Kansas":        [118.09,94.14,67.60,"B12",4,"East"],
-  "Ohio St.":      [124.76,101.85,66.13,"B10",8,"East"],
-  "UCLA":          [124.11,101.93,64.64,"B10",7,"East"],
-  "Saint Mary's":  [119.84,97.40,65.25,"WCC",7,"South"],
-  "Iowa":          [121.91,99.75,63.02,"B10",9,"South"],
-  "North Carolina":[121.44,100.28,67.94,"ACC",6,"South"],
-  "Santa Clara":   [124.30,103.95,69.23,"WCC",10,"Midwest"],
-  "Utah St.":      [122.56,101.75,67.62,"MWC",9,"West"],
-  "Clemson":       [116.52,97.12,64.23,"ACC",8,"South"],
-  "Kentucky":      [120.20,99.50,68.31,"SEC",7,"Midwest"],
-  "Cincinnati":    [111.75,93.69,67.58,"B12",11,"West"],
-  "BYU":           [125.12,103.27,69.84,"B12",6,"West"],
-  "Miami FL":      [121.24,101.09,67.77,"ACC",7,"West"],
-  "Villanova":     [120.00,100.47,65.08,"BE",8,"West"],
-  "Georgia":       [124.51,104.48,71.72,"SEC",8,"Midwest"],
-  "N.C. State":    [124.09,104.56,69.09,"ACC",11,"West"],
-  "Texas A&M":     [119.80,101.19,70.76,"SEC",10,"South"],
-  "SMU":           [122.97,104.88,68.56,"ACC",11,"Midwest"],
-  "Saint Louis":   [119.53,101.72,71.00,"A10",9,"Midwest"],
-  "Texas":         [124.53,106.15,67.00,"SEC",11,"West"],
-  "Missouri":      [119.71,103.56,66.29,"SEC",10,"West"],
-  "VCU":           [119.59,102.90,68.59,"A10",11,"South"],
-  "TCU":           [115.12,98.72,67.64,"B12",9,"East"],
-  "South Florida": [117.04,101.16,71.45,"Amer",11,"East"],
-  "UCF":           [120.25,105.53,69.16,"B12",10,"East"],
-  "Tulsa":         [121.09,108.23,67.84,"Amer",14,"South"],
-  "Northern Iowa": [109.85,98.39,62.24,"MVC",12,"East"],
-  "Akron":         [117.98,105.67,70.31,"MAC",12,"Midwest"],
-  "McNeese St.":   [113.73,101.98,66.17,"Slnd",12,"South"],
-  "Oklahoma St.":  [119.31,107.37,72.09,"B12",6,"South"],
-  "Miami OH":      [116.75,108.05,69.92,"MAC",11,"Midwest"],
-  "Hofstra":       [113.89,105.03,64.70,"CAA",13,"Midwest"],
-  "High Point":    [116.86,107.66,69.9,"BSth",12,"West"],
-  "Cal Baptist":   [107.69,101.11,65.87,"WAC",13,"East"],
-  "Seattle":       [102.39,97.07,67.66,"WCC",11,"West"],
-  "N. Dakota St.": [111.58,106.32,66.33,"Sum",14,"East"],
-  "Hawaii":        [107.00,101.53,69.64,"BW",13,"West"],
-  "Wright St.":    [112.25,109.52,67.09,"Horz",14,"Midwest"],
-  "Troy":          [110.71,109.02,64.99,"SB",13,"South"],
-  "Kennesaw St.":  [110.70,109.80,71.23,"CUSA",14,"West"],
-  "UMBC":          [107.88,109.57,66.11,"AE",16,"Midwest"],
-  "Siena":         [106.42,110.42,64.61,"MAAC",16,"East"],
-  "Furman":        [106.45,109.95,65.87,"SC",15,"East"],
-  "Queens":        [114.47,117.89,69.55,"ASun",15,"West"],
-  "Howard":        [102.52,107.02,69.03,"MEAC",16,"Midwest"],
-  "Tennessee St.": [107.7,112.17,70.17,"OVC",15,"Midwest"],
-  "LIU":           [103.87,110.42,67.81,"NEC",16,"West"],
-  "Prairie View":  [100.56,112.4,70.89,"SWAC",16,"South"],
-  "Penn":          [106.99,105.66,69.01,"Ivy",14,"South"],
-  "Lehigh":        [101.89,113.69,66.89,"Pat",16,"South"],
-  "Idaho":         [106.26,108.56,67.5,"BSky",15,"South"],
-  "Idaho":          [106.26,108.56,67.5,"BSky",15,"South"],
-};
-
-// Live ratings — will be overwritten by localStorage if saved
-let R = {};
-function initR() { Object.keys(DEFAULTS).forEach(k=>{ R[k]=[...DEFAULTS[k]]; }); }
-initR();
-
-function saveR() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(R)); return true; } catch(e){ return false; }
-}
-function loadR() {
-  try {
-    const s = localStorage.getItem(STORAGE_KEY);
-    if (!s) return false;
-    const p = JSON.parse(s);
-    if (typeof p !== 'object' || Array.isArray(p)) return false;
-    // Merge saved into R — only update fields that exist
-    Object.entries(p).forEach(([k,v]) => {
-      if (Array.isArray(v) && v.length >= 3) R[k] = v;
-    });
-    return true;
-  } catch(e){ return false; }
-}
-
-function getR(name) {
-  return R[name] || DEFAULTS[name] || null;
-}
-
-// ═══════════════════════════
-//  GAMES LIST
-// ═══════════════════════════
-const GAMES = [
-  // ── EAST ──────────────────────────────────────────
-  {t1:"Duke",s1:1,t2:"Siena",s2:16,region:"East",day:"Thu",site:"Greenville, SC"},
-  {t1:"Ohio St.",s1:8,t2:"TCU",s2:9,region:"East",day:"Thu",site:"Greenville, SC"},
-  {t1:"Louisville",s1:6,t2:"South Florida",s2:11,region:"East",day:"Thu",site:"Buffalo, NY"},
-  {t1:"Michigan St.",s1:3,t2:"N. Dakota St.",s2:14,region:"East",day:"Thu",site:"Buffalo, NY"},
-  {t1:"St. John's",s1:5,t2:"Northern Iowa",s2:12,region:"East",day:"Fri",site:"San Diego, CA"},
-  {t1:"Kansas",s1:4,t2:"Cal Baptist",s2:13,region:"East",day:"Fri",site:"San Diego, CA"},
-  {t1:"UCLA",s1:7,t2:"UCF",s2:10,region:"East",day:"Fri",site:"Philadelphia, PA"},
-  {t1:"Connecticut",s1:2,t2:"Furman",s2:15,region:"East",day:"Fri",site:"Philadelphia, PA"},
-  // ── WEST ──────────────────────────────────────────
-  {t1:"Arizona",s1:1,t2:"LIU",s2:16,region:"West",day:"Thu",site:"Portland, OR"},
-  {t1:"Villanova",s1:8,t2:"Utah St.",s2:9,region:"West",day:"Thu",site:"Portland, OR"},
-  {t1:"Arkansas",s1:4,t2:"Hawaii",s2:13,region:"West",day:"Thu",site:"Portland, OR"},
-  {t1:"BYU",s1:6,t2:"Texas",s2:11,region:"West",day:"Thu",site:"Portland, OR",note:"11: TX won First Four vs NC State"},
-  {t1:"Wisconsin",s1:5,t2:"High Point",s2:12,region:"West",day:"Fri",site:"Oklahoma City, OK"},
-  {t1:"Gonzaga",s1:3,t2:"Kennesaw St.",s2:14,region:"West",day:"Fri",site:"Oklahoma City, OK"},
-  {t1:"Miami FL",s1:7,t2:"Missouri",s2:10,region:"West",day:"Fri",site:"St. Louis, MO"},
-  {t1:"Purdue",s1:2,t2:"Queens",s2:15,region:"West",day:"Fri",site:"St. Louis, MO"},
-  // ── MIDWEST ───────────────────────────────────────
-  {t1:"Michigan",s1:1,t2:"UMBC",s2:16,region:"Midwest",day:"Thu",site:"Buffalo, NY",note:"16: UMBC won First Four vs Howard"},
-  {t1:"Georgia",s1:8,t2:"Saint Louis",s2:9,region:"Midwest",day:"Thu",site:"Buffalo, NY"},
-  {t1:"Tennessee",s1:6,t2:"Miami OH",s2:11,region:"Midwest",day:"Thu",site:"Oklahoma City, OK",note:"11: Miami OH won First Four vs SMU"},
-  {t1:"Virginia",s1:3,t2:"Wright St.",s2:14,region:"Midwest",day:"Thu",site:"Oklahoma City, OK"},
-  {t1:"Texas Tech",s1:5,t2:"Akron",s2:12,region:"Midwest",day:"Fri",site:"St. Louis, MO"},
-  {t1:"Alabama",s1:4,t2:"Hofstra",s2:13,region:"Midwest",day:"Fri",site:"St. Louis, MO"},
-  {t1:"Kentucky",s1:7,t2:"Santa Clara",s2:10,region:"Midwest",day:"Fri",site:"St. Louis, MO"},
-  {t1:"Iowa St.",s1:2,t2:"Tennessee St.",s2:15,region:"Midwest",day:"Fri",site:"St. Louis, MO"},
-  // ── SOUTH ─────────────────────────────────────────
-  {t1:"Florida",s1:1,t2:"Prairie View",s2:16,region:"South",day:"Thu",site:"Tampa, FL",note:"16: PV won First Four vs Lehigh"},
-  {t1:"Clemson",s1:8,t2:"Iowa",s2:9,region:"South",day:"Thu",site:"Tampa, FL"},
-  {t1:"North Carolina",s1:6,t2:"VCU",s2:11,region:"South",day:"Thu",site:"Greenville, SC"},
-  {t1:"Illinois",s1:3,t2:"Penn",s2:14,region:"South",day:"Thu",site:"Greenville, SC"},
-  {t1:"Vanderbilt",s1:5,t2:"McNeese St.",s2:12,region:"South",day:"Fri",site:"Oklahoma City, OK"},
-  {t1:"Nebraska",s1:4,t2:"Troy",s2:13,region:"South",day:"Fri",site:"Oklahoma City, OK"},
-  {t1:"Saint Mary's",s1:7,t2:"Texas A&M",s2:10,region:"South",day:"Fri",site:"Oklahoma City, OK"},
-  {t1:"Houston",s1:2,t2:"Idaho",s2:15,region:"South",day:"Fri",site:"Oklahoma City, OK"},
+// ═══════════════════════════════════════════
+//  PLAYER DATABASE
+// ═══════════════════════════════════════════
+const DEFAULT_PLAYERS = [
+  ["Sinner",0.925,0.335],["Alcaraz",0.910,0.340],["Medvedev",0.855,0.295],
+  ["Djokovic",0.880,0.250],["Zverev",0.900,0.215],["Demin",0.830,0.265],
+  ["Draper",0.860,0.230],["Fritz",0.895,0.170],["FAA",0.875,0.190],
+  ["Shelton",0.895,0.170],["TommyP",0.830,0.230],["Mussetti",0.830,0.230],
+  ["Korda",0.850,0.205],["Fonseca",0.850,0.205],["Fils",0.840,0.210],
+  ["Rublev",0.855,0.195],["Mensik",0.840,0.205],["Bublik",0.870,0.175],
+  ["Tien",0.805,0.240],["Ruud",0.860,0.175],["Machac",0.845,0.185],
+  ["Fokina",0.805,0.220],["Cerundolo",0.780,0.245],["Lehecka",0.845,0.180],
+  ["Khachanov",0.850,0.170],["Nakashima",0.860,0.160],["Munar",0.805,0.210],
+  ["Tiafoe",0.805,0.210],["Humbert",0.845,0.170],["Tsitsipas",0.845,0.165],
+  ["Norrie",0.805,0.205],["Maroszan",0.810,0.200],["Shapovalov",0.795,0.210],
+  ["Michelsen",0.830,0.175],["Collignom",0.830,0.170],["Vacherot",0.840,0.155],
+  ["Medjedovic",0.835,0.160],["Berettini",0.855,0.140],["Cazaux",0.815,0.180],
+  ["Kecmanovic",0.795,0.195],["Spizziri",0.775,0.210],["Hurcacz",0.880,0.100],
+  ["Cobolli",0.795,0.185],["Rinderknech",0.855,0.125],["Giron",0.795,0.180],
+  ["Griekspoor",0.845,0.130],["Acche",0.770,0.205],["Cilic",0.840,0.135],
+  ["Sonego",0.810,0.160],["Moutet",0.740,0.230],["Brooksby",0.765,0.205],
+  ["Yibing",0.785,0.185],["Zvadja",0.795,0.175],["Darderi",0.780,0.190],
+  ["Botic",0.790,0.175],["Machjzak",0.775,0.190],["JordanT",0.780,0.185],
+  ["Diallo",0.800,0.165],["Tabilo",0.820,0.145],["Jodar",0.745,0.220],
+  ["Borges",0.800,0.160],["Zheng",0.775,0.185],["GMP",0.885,0.075],
+  ["Etcheberry",0.790,0.165],["Opelka",0.885,0.070],["Fuscovics",0.750,0.205],
+  ["Dimitrov",0.815,0.140],["Halys",0.825,0.130],["Mcdonald",0.750,0.205],
+  ["Hanfman",0.785,0.165],["Virtanen",0.795,0.155],["Baez",0.715,0.235],
+  ["Bergs",0.770,0.180],["Prizmic",0.770,0.180],["Carreno",0.765,0.180],
+  ["Tirante",0.780,0.165],["Kypson",0.805,0.140],["Popyrin",0.810,0.135],
+  ["Kovacevic",0.825,0.120],["Struff",0.780,0.160],["ChristopherO",0.780,0.160],
+  ["Shang",0.795,0.145],["EthanQ",0.795,0.145],["Wong",0.785,0.155],
+  ["Rodesch",0.765,0.175],["Riijikata",0.740,0.195],["Monfils",0.805,0.130],
+  ["Pinnington",0.800,0.135],["Blockx",0.775,0.160],["Wawrinka",0.815,0.120],
+  ["Bonzi",0.770,0.160],["Fearnley",0.760,0.170],["Atmane",0.780,0.150],
+  ["Bellucci",0.775,0.155],["Landaluce",0.750,0.180],["Comesana",0.755,0.175],
+  ["MartinDamm",0.840,0.090],["Arnaldi",0.760,0.165],["Sho",0.775,0.150],
+  ["Emilio",0.780,0.140],["Zhang",0.775,0.145],["Mannarino",0.780,0.140],
+  ["Jarry",0.800,0.120],["BautistaAgut",0.750,0.170],["ColtonS",0.705,0.215],
+  ["Royer",0.765,0.150],["Walton",0.790,0.125],["Scrcina",0.670,0.245],
+  ["Kopriva",0.710,0.205],["Reidi",0.750,0.160],["Vukic",0.800,0.110],
+  ["Nardi",0.720,0.190],["Dzhumur",0.710,0.195],["Garin",0.730,0.175],
+  ["Augut",0.725,0.180],["Travaglia",0.725,0.180],["Sweeney",0.730,0.170],
+  ["Shevchenko",0.745,0.155],["Altmaier",0.760,0.140],["DanielAguilar",0.710,0.190],
+  ["Navone",0.705,0.190],["Buse",0.710,0.185],["Duckworth",0.780,0.115],
+  ["Maestrelli",0.760,0.130],["Misolic",0.750,0.135],["Blanch",0.750,0.130],
+  ["Schoolkate",0.775,0.105],["Carabelli",0.705,0.170],["Muller",0.715,0.155],
+  ["Bashiavilli",0.730,0.130],["Elias",0.715,0.145],["Sakamoto",0.755,0.105],
+  ["Martinez",0.690,0.160],["Burruchaga",0.645,0.205],["TrevorSvadja",0.670,0.175],
+  ["Mochuiziki",0.660,0.180],["FredericoG",0.700,0.135],["Krueger",0.685,0.145],
+  ["Draxl",0.650,0.170]
 ];
 
-// ═══════════════════════════
+const LG_BRK = 0.185; // league avg break rate → matchHld = hld - oppBrk + LG_BRK
+
+// ── PERSISTENCE ─────────────────────────────
+const STORAGE_KEY = 'acesim_players_v1';
+function saveRatings() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(PLAYERS));
+    return true;
+  } catch(e) { return false; }
+}
+function loadRatings() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed) || !parsed.every(p => Array.isArray(p) && p.length >= 3 && typeof p[0]==='string' && typeof p[1]==='number' && typeof p[2]==='number')) return false;
+    PLAYERS = parsed;
+    return true;
+  } catch(e) { return false; }
+}
+
+// Live editable ratings — start from defaults, then load any saved overrides
+let PLAYERS = DEFAULT_PLAYERS.map(p => [...p]);
+
+function getPlayer(name) {
+  return PLAYERS.find(p => p[0] === name);
+}
+
+function calcMatchHold(hld, oppBrk) {
+  return Math.min(0.99, Math.max(0.01, hld - oppBrk + LG_BRK + courtFactor / 100));
+}
+
+// ═══════════════════════════════════════════
 //  STATE
-// ═══════════════════════════
-let curFilter='all', curSort='default', tournMode=true, penalty=2.5;
-const rCode={East:"E",West:"W",Midwest:"M",South:"S"};
+// ═══════════════════════════════════════════
+let matchFmt = 'bo3', finalSet = 'tb', surface = 'hard';
+let courtFactor = 0; // percentage points added to both players' match hold%
+let customNameA = null, customNameB = null; // editable name overrides
+let selA = null, selB = null;  // selected player objects
+let overrideA = null, overrideB = null; // manual hold% overrides
 
-// ═══════════════════════════
-//  CALC
-// ═══════════════════════════
-function calc(t1, t2) {
-  const A=getR(t1), B=getR(t2); if(!A||!B) return null;
-  const pen = tournMode ? penalty : 0;
-  const rawOA = A[0] - LG_DE + B[1];
-  const rawOB = B[0] - LG_DE + A[1];
-  const mOA = rawOA - pen, mOB = rawOB - pen;
-  const tempo = A[2] + B[2] - LG_T;
-  const pA = (mOA/100)*tempo, pB = (mOB/100)*tempo;
-  return {pA,pB,total:pA+pB,spread:Math.abs(pA-pB),
-          favored:pA>=pB?t1:t2,tempo,pen,
-          rawTotal:((rawOA/100)*tempo)+((rawOB/100)*tempo),mOA,mOB};
+// ═══════════════════════════════════════════
+//  PLAYER SEARCH / DROPDOWN
+// ═══════════════════════════════════════════
+function openDropdown(side) {
+  const q = document.getElementById('search'+side).value.toLowerCase();
+  const dd = document.getElementById('dd'+side);
+  const filtered = PLAYERS.filter(p => p[0].toLowerCase().includes(q)).slice(0, 20);
+
+  dd.innerHTML = filtered.map(p => `
+    <div class="dd-item" onclick="selectPlayer('${side}','${p[0]}')">
+      <span class="dd-name">${p[0]}</span>
+      <span class="dd-stats">Hld ${(p[1]*100).toFixed(1)}% · Brk ${(p[2]*100).toFixed(1)}%</span>
+    </div>`).join('');
+  dd.classList.add('open');
 }
 
-// ═══════════════════════════
-//  SEED CSS
-// ═══════════════════════════
-function sdCls(s){if(s<=2)return`sd${s}`;if(s<=4)return'sd3';if(s<=8)return'sd5';if(s<=11)return'sd9';if(s<=14)return'sd12';return'sd15';}
+function selectPlayer(side, name) {
+  const p = getPlayer(name);
+  if (!side || !p) return;
+  if (side === 'A') { selA = p; } else { selB = p; }
 
-// ═══════════════════════════
-//  GAMES RENDER
-// ═══════════════════════════
-function renderGames() {
-  let games=[...GAMES];
-  if(curFilter!=='all'){
-    if(['Thu','Fri'].includes(curFilter)) games=games.filter(g=>g.day===curFilter);
-    else games=games.filter(g=>g.region===curFilter);
+  document.getElementById('dd'+side).classList.remove('open');
+  document.getElementById('search'+side).value = '';
+  document.getElementById('sel'+side).style.display = 'flex';
+  document.getElementById('selName'+side).value = p[0];
+  if (side === 'A') customNameA = null; else customNameB = null;
+  document.getElementById('selStats'+side).textContent =
+    `Hld ${(p[1]*100).toFixed(1)}%  Brk ${(p[2]*100).toFixed(1)}%`;
+  // Clear override
+  document.getElementById('override'+side).value = '';
+  document.getElementById('override'+side).classList.remove('manual');
+  if (side === 'A') overrideA = null; else overrideB = null;
+
+  updateMatchHoldDisplay();
+}
+
+function clearSelection(side) {
+  if (side === 'A') { selA = null; overrideA = null; customNameA = null; }
+  else              { selB = null; overrideB = null; customNameB = null; }
+  document.getElementById('sel'+side).style.display = 'none';
+  document.getElementById('search'+side).value = '';
+  document.getElementById('override'+side).value = '';
+  document.getElementById('override'+side).classList.remove('manual');
+  updateMatchHoldDisplay();
+}
+
+function onOverride(side) {
+  const v = parseFloat(document.getElementById('override'+side).value);
+  const el = document.getElementById('override'+side);
+  if (!isNaN(v) && v > 0) {
+    if (side === 'A') overrideA = v / 100; else overrideB = v / 100;
+    el.classList.add('manual');
+  } else {
+    if (side === 'A') overrideA = null; else overrideB = null;
+    el.classList.remove('manual');
   }
-  if(curSort!=='default'){
-    games=games.map(g=>({...g,_c:calc(g.t1,g.t2)})).filter(g=>g._c);
-    const sorts={'total-desc':(a,b)=>b._c.total-a._c.total,'total-asc':(a,b)=>a._c.total-b._c.total,
-                 'spread-desc':(a,b)=>b._c.spread-a._c.spread,'spread-asc':(a,b)=>a._c.spread-b._c.spread,
-                 'tempo-desc':(a,b)=>b._c.tempo-a._c.tempo};
-    if(sorts[curSort]) games.sort(sorts[curSort]);
+  updateMatchHoldDisplay();
+}
+
+// Close dropdowns on outside click
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('player-search')) {
+    document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
   }
-  const byDay={};
-  games.forEach(g=>{const k=g.day==='Thu'?'Thursday · March 19':'Friday · March 20';if(!byDay[k])byDay[k]=[];byDay[k].push(g);});
-  const cont=document.getElementById('gamesContent');
-  cont.innerHTML='';
-  if(!games.length){cont.innerHTML='<p style="color:var(--muted);padding:28px;font-family:var(--mono);font-size:12px">No games match.</p>';return;}
+});
 
-  Object.entries(byDay).forEach(([day,list])=>{
-    const wrap=document.createElement('div');
-    const hdr=document.createElement('div'); hdr.className='day-hdr';
-    hdr.innerHTML=`<h2>${day}</h2><div class="day-line"></div><span class="day-cnt">${list.length} games</span>`;
-    wrap.appendChild(hdr);
-    const grid=document.createElement('div'); grid.className='games-grid';
+function updateMatchHoldDisplay() {
+  const mhAEl = document.getElementById('mhA');
+  const mhBEl = document.getElementById('mhB');
+  const mhAF  = document.getElementById('mhAFormula');
+  const mhBF  = document.getElementById('mhBFormula');
 
-    list.forEach(g=>{
-      const c=calc(g.t1,g.t2);
-      const rc=rCode[g.region]||'E';
-      const aFav=c&&c.favored===g.t1;
-      const pA=c?c.pA.toFixed(1):'—', pB=c?c.pB.toFixed(1):'—';
-      const totD=c?c.total.toFixed(1):'—', sprD=c?c.spread.toFixed(1):'—', tmpD=c?c.tempo.toFixed(1):'—';
-      const favN=c?c.favored:g.t1, dogN=c?(c.favored===g.t1?g.t2:g.t1):g.t2;
-      const A=getR(g.t1), B=getR(g.t2);
-      const statsA=A?`${A[0].toFixed(1)} / ${A[1].toFixed(1)}`:'';
-      const statsB=B?`${B[0].toFixed(1)} / ${B[1].toFixed(1)}`:'';
-      const adjStrip=tournMode&&c?`<div class="adj-strip">Tourn −${c.pen.toFixed(1)}/team · raw ${c.rawTotal.toFixed(1)} → ${totD}</div>`:'';
-
-      const card=document.createElement('div'); card.className='card';
-      card.innerHTML=`
-        <div class="card-head">
-          <span class="rtag r${rc}">${g.region}</span>
-          <div class="cloc">${g.site}${g.note?'<br><span style="font-size:8px;color:var(--teal)">'+g.note+'</span>':''}</div>
-        </div>
-        <div class="card-teams">
-          <div class="trow">
-            <span class="sb ${sdCls(g.s1)}">${g.s1}</span>
-            <span class="tname ${aFav?'fav':''}">${g.t1}</span>
-            <span class="tstats">${statsA}</span>
-            <span class="tpts ${c?(aFav?'win':'los'):''}">${pA}</span>
-          </div>
-          <div class="trow">
-            <span class="sb ${sdCls(g.s2)}">${g.s2}</span>
-            <span class="tname ${!aFav?'fav':''}">${g.t2}</span>
-            <span class="tstats">${statsB}</span>
-            <span class="tpts ${c?(!aFav?'win':'los'):''}">${pB}</span>
-          </div>
-        </div>
-        <div class="out-bar">
-          <div class="ob"><div class="ob-lbl">Spread</div><div class="ob-val spread">${c?favN+' −'+sprD:'—'}</div><div class="ob-sub">${c?dogN+' +'+sprD:''}</div></div>
-          <div class="ob"><div class="ob-lbl">Total</div><div class="ob-val total">${totD}</div><div class="ob-sub">o/u</div></div>
-          <div class="ob"><div class="ob-lbl">Tempo</div><div class="ob-val tempo">${tmpD}</div><div class="ob-sub">poss/40</div></div>
-        </div>
-        ${adjStrip}`;
-      grid.appendChild(card);
-    });
-    wrap.appendChild(grid);
-    cont.appendChild(wrap);
-  });
+  if (selA && selB) {
+    const autoA = calcMatchHold(selA[1], selB[2]);
+    const autoB = calcMatchHold(selB[1], selA[2]);
+    const dispA = overrideA !== null ? overrideA : autoA;
+    const dispB = overrideB !== null ? overrideB : autoB;
+    mhAEl.textContent = (dispA * 100).toFixed(1) + '%';
+    mhBEl.textContent = (dispB * 100).toFixed(1) + '%';
+    const cfStr = courtFactor !== 0 ? ` ${courtFactor>0?'+':''}${courtFactor.toFixed(1)}cf` : '';
+    mhAF.textContent = overrideA !== null ? 'manual override' :
+      `${(selA[1]*100).toFixed(1)} − ${(selB[2]*100).toFixed(1)} + 18.5${cfStr} = ${(autoA*100).toFixed(1)}%`;
+    mhBF.textContent = overrideB !== null ? 'manual override' :
+      `${(selB[1]*100).toFixed(1)} − ${(selA[2]*100).toFixed(1)} + 18.5${cfStr} = ${(autoB*100).toFixed(1)}%`;
+  } else if (selA || selB) {
+    mhAEl.textContent = selA ? (selA[1]*100).toFixed(1)+'% (raw)' : '—';
+    mhBEl.textContent = selB ? (selB[1]*100).toFixed(1)+'% (raw)' : '—';
+    mhAF.textContent = selA ? 'select opponent for match hold' : 'select player';
+    mhBF.textContent = selB ? 'select opponent for match hold' : 'select player';
+  } else {
+    mhAEl.textContent = '—'; mhBEl.textContent = '—';
+    mhAF.textContent = 'select player'; mhBF.textContent = 'select player';
+  }
 }
 
-// ═══════════════════════════
-//  CUSTOM MATCHUP
-// ═══════════════════════════
-function buildCustomDropdowns() {
-  const names=Object.keys(DEFAULTS).sort();
-  ['custA','custB'].forEach((id,i)=>{
-    const sel=document.getElementById(id); sel.innerHTML='';
-    names.forEach(n=>{
-      const o=document.createElement('option'); o.value=n;
-      const d=DEFAULTS[n]; o.textContent=`(${d[5][0]}${d[4]}) ${n}`;
-      sel.appendChild(o);
-    });
-    sel.value=i===0?'Duke':'Connecticut';
-  });
+// ═══════════════════════════════════════════
+//  TIEBREAK — iterative bottom-up DP
+// ═══════════════════════════════════════════
+function srvAt(t) {
+  if (t === 0) return 1;
+  return Math.floor((t + 1) / 2) % 2 === 0 ? 1 : 2;
 }
 
-function updateCustom() {
-  const nA=document.getElementById('custA').value, nB=document.getElementById('custB').value;
-  ['A','B'].forEach(s=>{
-    const name=document.getElementById('cust'+s).value;
-    const d=getR(name);
-    document.getElementById('cstats'+s).innerHTML=d?
-      `<b>OrtG</b> ${d[0].toFixed(1)} &nbsp;<b>DrtG</b> ${d[1].toFixed(1)} &nbsp;<b>T</b> ${d[2].toFixed(1)}`:'—';
-  });
-  if(nA===nB){document.getElementById('custResult').innerHTML='<div style="grid-column:1/-1;padding:18px;text-align:center;color:rgba(255,255,255,.4);font-family:var(--mono);font-size:11px">Select two different teams</div>';return;}
-  const c=calc(nA,nB); if(!c) return;
-  const favN=c.favored, dogN=c.favored===nA?nB:nA;
-  const A=getR(nA), B=getR(nB), lg={oe:LG_OE,de:LG_DE,t:LG_T};
-  document.getElementById('custResult').innerHTML=`
-    <div class="cr"><div class="cr-lbl">Total</div><div class="cr-val ct">${c.total.toFixed(1)}</div><div class="cr-sub">o/u</div></div>
-    <div class="cr"><div class="cr-lbl">Spread</div><div class="cr-val cs">${favN} −${c.spread.toFixed(1)}</div><div class="cr-sub">${dogN} +${c.spread.toFixed(1)}</div></div>
-    <div class="cr"><div class="cr-lbl">Tempo</div><div class="cr-val cp">${c.tempo.toFixed(1)}</div><div class="cr-sub">poss/40</div></div>`;
-  document.getElementById('custScore').innerHTML=`
-    <div class="sc-team"><div class="sc-name">${nA}</div><div class="sc-pts ${c.pA>=c.pB?'win':'los'}">${c.pA.toFixed(1)}</div></div>
-    <div class="sc-vs">vs</div>
-    <div class="sc-team"><div class="sc-name">${nB}</div><div class="sc-pts ${c.pB>c.pA?'win':'los'}">${c.pB.toFixed(1)}</div></div>`;
-  const pen=tournMode?penalty:0;
-  document.getElementById('custWork').innerHTML=`
-    <div class="wc"><h4>Inputs</h4>
-      <div class="wr"><span class="wl">Lg OrtG / DrtG</span><span class="wv">${lg.oe} / ${lg.de}</span></div>
-      <div class="wr"><span class="wl">Lg Tempo</span><span class="wv">${lg.t}</span></div>
-      <div class="wr"><span class="wl">${nA} OrtG/DrtG/T</span><span class="wv">${A[0].toFixed(1)} / ${A[1].toFixed(1)} / ${A[2].toFixed(1)}</span></div>
-      <div class="wr"><span class="wl">${nB} OrtG/DrtG/T</span><span class="wv">${B[0].toFixed(1)} / ${B[1].toFixed(1)} / ${B[2].toFixed(1)}</span></div>
-      <div class="wr"><span class="wl">Tourn penalty</span><span class="wv">${tournMode?'−'+pen.toFixed(1)+'/team':'off'}</span></div>
+function tbDP(p1s, p2s, target) {
+  const dT = 2 * target;
+  const pA = srvAt(dT)   === 1 ? p1s : (1 - p2s);
+  const pB = srvAt(dT+1) === 1 ? p1s : (1 - p2s);
+  const pDW = (pA * pB) / (pA * pB + (1-pA) * (1-pB));
+  const dp = [];
+  for (let i = 0; i <= target; i++) dp.push(new Float64Array(target + 1));
+  dp[target][target] = pDW;
+  for (let j = 0; j < target; j++) dp[target][j] = 1.0;
+  for (let i = 0; i < target; i++) dp[i][target] = 0.0;
+  for (let i = target-1; i >= 0; i--)
+    for (let j = target-1; j >= 0; j--) {
+      const pW = srvAt(i+j) === 1 ? p1s : (1-p2s);
+      dp[i][j] = pW * dp[i+1][j] + (1-pW) * dp[i][j+1];
+    }
+  return dp[0][0];
+}
+
+// ═══════════════════════════════════════════
+//  HOLD% → POINT WIN PROB
+// ═══════════════════════════════════════════
+function holdFromP(p) {
+  const q = 1 - p;
+  const nd = Math.pow(p,4) + 4*Math.pow(p,4)*q + 10*Math.pow(p,4)*Math.pow(q,2);
+  const pd = 20 * Math.pow(p,3) * Math.pow(q,3);
+  return nd + pd * Math.pow(p,2) / (Math.pow(p,2) + Math.pow(q,2));
+}
+function solveP(hPct) {
+  let lo = 0.01, hi = 0.99;
+  const t = hPct / 100;
+  for (let i = 0; i < 60; i++) {
+    const m = (lo+hi)/2;
+    holdFromP(m) < t ? lo = m : hi = m;
+  }
+  return (lo+hi)/2;
+}
+
+// ═══════════════════════════════════════════
+//  AMERICAN ODDS
+// ═══════════════════════════════════════════
+function toAm(p) {
+  if (p <= 0) return '—';
+  if (p >= 1) return '—';
+  if (p > 0.5) return Math.round(-100 * p / (1-p)).toString();
+  return '+' + Math.round(100 * (1-p) / p);
+}
+
+// ═══════════════════════════════════════════
+//  PLAY ONE SET  (Python port)
+// ═══════════════════════════════════════════
+function playSet(hA, hB, serverIsA, gaStart, gbStart, bp, hb) {
+  let gA = gaStart, gB = gbStart;
+  let cHA = hA, cHB = hB;
+  while (true) {
+    if ((gA >= 6 || gB >= 6) && Math.abs(gA-gB) >= 2)
+      return { gA, gB, cHA, cHB, nxtSrv: serverIsA };
+    if (gA === 6 && gB === 6) {
+      // Python tiebreak: hold^3.5 heuristic
+      const pA3 = Math.pow(cHA, 3.5), pB3 = Math.pow(cHB, 3.5);
+      const pATB = pA3 / (pA3 + pB3);
+      if (Math.random() < pATB) gA++; else gB++;
+      return { gA, gB, cHA, cHB, nxtSrv: !serverIsA };
+    }
+    const pWin = serverIsA ? cHA : cHB;
+    if (Math.random() < pWin) {
+      if (serverIsA) { gA++; cHA = Math.min(1, cHA + hb); }
+      else           { gB++; cHB = Math.min(1, cHB + hb); }
+    } else {
+      if (serverIsA) { gB++; cHA = Math.max(0, cHA - bp); }
+      else           { gA++; cHB = Math.max(0, cHB - bp); }
+    }
+    serverIsA = !serverIsA;
+  }
+}
+
+function playAdvSet(hA, hB, serverIsA, bp, hb) {
+  let gA = 0, gB = 0, cHA = hA, cHB = hB;
+  while (true) {
+    if ((gA >= 6 || gB >= 6) && Math.abs(gA-gB) >= 2)
+      return { gA, gB, cHA, cHB, nxtSrv: serverIsA };
+    const pWin = serverIsA ? cHA : cHB;
+    if (Math.random() < pWin) {
+      if (serverIsA) { gA++; cHA = Math.min(1, cHA + hb); }
+      else           { gB++; cHB = Math.min(1, cHB + hb); }
+    } else {
+      if (serverIsA) { gB++; cHA = Math.max(0, cHA - bp); }
+      else           { gA++; cHB = Math.max(0, cHB - bp); }
+    }
+    serverIsA = !serverIsA;
+  }
+}
+
+// ═══════════════════════════════════════════
+//  PLAY ONE MATCH
+// ═══════════════════════════════════════════
+function playMatch(hA, hB, p) {
+  const stw = matchFmt === 'bo5' ? 3 : 2;
+  let sA = 0, sB = 0, cHA = hA, cHB = hB;
+  let srv = Math.random() < 0.5;
+  const sets = [];
+  let tGA = 0, tGB = 0;
+
+  while (sA < stw && sB < stw) {
+    const isFinal = (sA + sB === stw*2 - 2);
+    let res;
+    if (isFinal && finalSet === 'adv') {
+      res = playAdvSet(cHA, cHB, srv, p.bp, p.hb);
+    } else {
+      res = playSet(cHA, cHB, srv, 0, 0, p.bp, p.hb);
+    }
+    cHA = res.cHA; cHB = res.cHB; srv = res.nxtSrv;
+    sets.push([res.gA, res.gB]);
+    tGA += res.gA; tGB += res.gB;
+    if (res.gA > res.gB) {
+      sA++;
+      cHA = Math.min(1, cHA + p.mAB); cHB = Math.max(0, cHB - p.mABp);
+    } else {
+      sB++;
+      cHB = Math.min(1, cHB + p.mBB); cHA = Math.max(0, cHA - p.mBBp);
+    }
+  }
+  return { winner: sA >= stw ? 'A' : 'B', sA, sB, sets, tGA, tGB };
+}
+
+// ═══════════════════════════════════════════
+//  RUN SIMULATION
+// ═══════════════════════════════════════════
+function getMH() {
+  let hA, hB, nameA, nameB;
+  if (selA && selB) {
+    hA = overrideA !== null ? overrideA : calcMatchHold(selA[1], selB[2]);
+    hB = overrideB !== null ? overrideB : calcMatchHold(selB[1], selA[2]);
+    nameA = customNameA !== null ? customNameA : selA[0];
+    nameB = customNameB !== null ? customNameB : selB[0];
+  } else {
+    return null;
+  }
+  return { hA, hB, nameA, nameB };
+}
+
+function runSim() {
+  const mh = getMH();
+  if (!mh) {
+    document.getElementById('results').innerHTML =
+      '<div class="loading-msg">Select two players to simulate</div>';
+    return;
+  }
+  const { hA, hB, nameA, nameB } = mh;
+  const N = parseInt(document.getElementById('simCount').value);
+  const p = {
+    mAB:  parseFloat(document.getElementById('momAwin').value),
+    mABp: parseFloat(document.getElementById('momAwinB').value),
+    mBB:  parseFloat(document.getElementById('momBwin').value),
+    mBBp: parseFloat(document.getElementById('momBwinA').value),
+    bp:   parseFloat(document.getElementById('breakPen').value),
+    hb:   parseFloat(document.getElementById('holdBounce').value),
+  };
+  // Derived point probs for analytical TB display
+  const pA = solveP(hA * 100), pB = solveP(hB * 100);
+
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('progWrap').style.display = 'block';
+  document.getElementById('results').innerHTML = '';
+
+  let wA=0, stA=0, stB=0;
+  const totals=[], margins=[], exMarg=[], fsGames=[], fsMarg=[];
+  const msCnt={}, ssCnt={};
+  const stAG=[], stBG=[], a21G=[], b21G=[];
+  const stw = matchFmt==='bo5'?3:2;
+
+  const CHUNK=2000; let done=0;
+  function chunk() {
+    for (let i=done; i<Math.min(done+CHUNK,N); i++) {
+      const m = playMatch(hA, hB, p);
+      if (m.winner==='A') wA++;
+      const tot = m.tGA+m.tGB, mg = m.tGA-m.tGB;
+      totals.push(tot); margins.push(mg); exMarg.push(mg);
+      const msKey=`${m.sA}-${m.sB}`;
+      msCnt[msKey]=(msCnt[msKey]||0)+1;
+      if (m.sA===stw&&m.sB===0){stA++;stAG.push(tot);}
+      if (m.sB===stw&&m.sA===0){stB++;stBG.push(tot);}
+      if (stw===2){
+        if(m.sA===2&&m.sB===1)a21G.push(tot);
+        if(m.sB===2&&m.sA===1)b21G.push(tot);
+      }
+      if (m.sets.length>0){
+        fsGames.push(m.sets[0][0]+m.sets[0][1]);
+        fsMarg.push(m.sets[0][0]-m.sets[0][1]);
+      }
+      m.sets.forEach(([sa,sb])=>{
+        const w=sa>sb?'A':'B';
+        const k=(sa>sb?`${sa}-${sb}`:`${sb}-${sa}`)+'|'+w;
+        ssCnt[k]=(ssCnt[k]||0)+1;
+      });
+    }
+    done=Math.min(done+CHUNK,N);
+    document.getElementById('progFill').style.width=(done/N*100)+'%';
+    document.getElementById('progLbl').textContent=`${done.toLocaleString()} / ${N.toLocaleString()}`;
+    if (done<N) { setTimeout(chunk,0); return; }
+    document.getElementById('runBtn').disabled=false;
+    document.getElementById('progWrap').style.display='none';
+    render({nameA,nameB,hA,hB,pA,pB,N,stw,wA,stA,stB,
+            totals,margins,exMarg,fsGames,fsMarg,msCnt,ssCnt,
+            stAG,stBG,a21G,b21G});
+  }
+  setTimeout(chunk,10);
+}
+
+// ═══════════════════════════════════════════
+//  RENDER RESULTS
+// ═══════════════════════════════════════════
+function med(a){const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function pOver(a,l){return a.filter(v=>v>l).length/a.length*100;}
+function pUnder(a,l){return a.filter(v=>v<l).length/a.length*100;}
+function cntBy(a){return a.reduce((o,v)=>{o[v]=(o[v]||0)+1;return o;},{});}
+
+function render(d) {
+  const {nameA,nameB,hA,hB,pA,pB,N,stw,wA,stA,stB,
+         totals,margins,exMarg,fsGames,fsMarg,msCnt,ssCnt,
+         stAG,stBG,a21G,b21G} = d;
+  const pWA=wA/N, pWB=1-pWA;
+  const pSA=stA/N, pSB=stB/N;
+  const medTot=med(totals), medMarg=med(margins);
+  const medFS=med(fsGames), medFSM=med(fsMarg);
+  const sweepLbl=stw===3?'3-0':'2-0';
+  const tbA=tbDP(pA,pB,7), tbB=tbDP(pB,pA,7);
+  const totSets=Object.values(ssCnt).reduce((a,b)=>a+b,0);
+  const tbSets=Object.entries(ssCnt).filter(([k])=>k.startsWith('7-6')).reduce((a,[,v])=>a+v,0);
+  const tbFreq=totSets>0?(tbSets/totSets*100).toFixed(1)+'%':'—';
+
+  const msArr=Object.entries(msCnt).map(([k,v])=>({k,pct:v/N*100})).sort((a,b)=>b.pct-a.pct);
+  const maxMS=Math.max(...msArr.map(s=>s.pct),1);
+  const ssA=Object.entries(ssCnt).filter(([k])=>k.endsWith('|A')).map(([k,v])=>({sc:k.split('|')[0],pct:v/totSets*100})).sort((a,b)=>b.pct-a.pct).slice(0,6);
+  const ssB=Object.entries(ssCnt).filter(([k])=>k.endsWith('|B')).map(([k,v])=>({sc:k.split('|')[0],pct:v/totSets*100})).sort((a,b)=>b.pct-a.pct).slice(0,6);
+  const maxSS=Math.max(...[...ssA,...ssB].map(s=>s.pct),1);
+
+  const tLines=[medTot-1.5,medTot-0.5,medTot+0.5,medTot+1.5].map(Math.round);
+  const mLines=[medMarg-1.5,medMarg-0.5,medMarg+0.5,medMarg+1.5];
+  const fsCnt=cntBy(fsGames), fsMargCnt=cntBy(fsMarg);
+  const fsPoss=[6,7,8,9,10,11,12,13];
+  const maxFSC=Math.max(...fsPoss.map(g=>(fsCnt[g]||0)/fsGames.length*100),1);
+  const margCnt=cntBy(exMarg);
+
+  document.getElementById('results').innerHTML = `
+<div class="prob-card">
+  <div class="prob-header"><span class="ph-n c1">${nameA}</span><span class="ph-n c2">${nameB}</span></div>
+  <div class="prob-pcts">
+    <div><div class="pp c1">${(pWA*100).toFixed(1)}%</div><div class="pp-odds">${toAm(pWA)}</div></div>
+    <div style="text-align:right"><div class="pp c2">${(pWB*100).toFixed(1)}%</div><div class="pp-odds" style="text-align:right">${toAm(pWB)}</div></div>
+  </div>
+  <div class="prob-track"><div class="prob-fill" style="width:${(pWA*100).toFixed(1)}%"></div></div>
+  <div class="prob-sub">${N.toLocaleString()} sims · Match hold: ${nameA} ${(hA*100).toFixed(1)}% · ${nameB} ${(hB*100).toFixed(1)}%</div>
+</div>
+
+<div class="stat-grid">
+  <div class="sc"><div class="sc-lbl">${nameA} ${sweepLbl}</div><div class="sc-val">${(pSA*100).toFixed(1)}%</div><div class="sc-sub">${toAm(pSA)}</div></div>
+  <div class="sc"><div class="sc-lbl">${nameB} ${sweepLbl}</div><div class="sc-val">${(pSB*100).toFixed(1)}%</div><div class="sc-sub">${toAm(pSB)}</div></div>
+  <div class="sc"><div class="sc-lbl">Avg Total Games</div><div class="sc-val">${(totals.reduce((a,b)=>a+b,0)/N).toFixed(1)}</div><div class="sc-sub">med ${medTot}</div></div>
+  <div class="sc"><div class="sc-lbl">TB / Set</div><div class="sc-val">${tbFreq}</div><div class="sc-sub">${nameA} ${(tbA*100).toFixed(1)}% · ${nameB} ${(tbB*100).toFixed(1)}%</div></div>
+</div>
+
+<div class="tables-grid">
+  <div class="card" style="margin-bottom:0">
+    <h3>Match Score</h3>
+    ${msArr.map(s=>{const isA=s.k.startsWith(String(stw));return`<div class="dist-row">
+      <span class="dr-lbl">${isA?nameA.split(' ')[0]:nameB.split(' ')[0]} ${s.k}</span>
+      <div class="dr-track"><div class="dr-fill ${isA?'fp1':'fp2'}" style="width:${(s.pct/maxMS*100).toFixed(1)}%"></div></div>
+      <span class="dr-pct">${s.pct.toFixed(1)}%</span>
+      <span class="dr-odds">${toAm(s.pct/100)}</span>
+    </div>`;}).join('')}
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <h3>Set Scores</h3>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">${nameA} wins</div>
+    ${ssA.map(s=>`<div class="dist-row"><span class="dr-lbl">${s.sc}</span><div class="dr-track"><div class="dr-fill fp1" style="width:${(s.pct/maxSS*100).toFixed(1)}%"></div></div><span class="dr-pct">${s.pct.toFixed(1)}%</span></div>`).join('')}
+    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 6px;">${nameB} wins</div>
+    ${ssB.map(s=>`<div class="dist-row"><span class="dr-lbl">${s.sc}</span><div class="dr-track"><div class="dr-fill fp2" style="width:${(s.pct/maxSS*100).toFixed(1)}%"></div></div><span class="dr-pct">${s.pct.toFixed(1)}%</span></div>`).join('')}
+  </div>
+</div>
+
+<div class="card">
+  <h3>Over / Under</h3>
+  <div class="ou-grid">
+    <div><h4>Total Games</h4>
+    ${tLines.map(l=>`
+      <div class="ou-row"><span class="ou-line">O ${l+.5}</span><span class="ou-pct">${pOver(totals,l+.5).toFixed(1)}%</span><span class="ou-am">${toAm(pOver(totals,l+.5)/100)}</span></div>
+      <div class="ou-row"><span class="ou-line">U ${l+.5}</span><span class="ou-pct">${pUnder(totals,l+.5).toFixed(1)}%</span><span class="ou-am">${toAm(pUnder(totals,l+.5)/100)}</span></div>`).join('')}
     </div>
-    <div class="wc"><h4>Calculation</h4>
-      <div class="wr"><span class="wl">${nA} match OrtG</span><span class="wv">${A[0].toFixed(1)}−${lg.de}+${B[1].toFixed(1)}−${pen}=${c.mOA.toFixed(2)}</span></div>
-      <div class="wr"><span class="wl">${nB} match OrtG</span><span class="wv">${B[0].toFixed(1)}−${lg.de}+${A[1].toFixed(1)}−${pen}=${c.mOB.toFixed(2)}</span></div>
-      <div class="wr"><span class="wl">Game Tempo</span><span class="wv">${A[2].toFixed(1)}+${B[2].toFixed(1)}−${lg.t}=${c.tempo.toFixed(2)}</span></div>
-      <div class="wr"><span class="wl">${nA} pts</span><span class="wv">(${c.mOA.toFixed(2)}/100)×${c.tempo.toFixed(2)}=${c.pA.toFixed(1)}</span></div>
-      <div class="wr"><span class="wl">${nB} pts</span><span class="wv">(${c.mOB.toFixed(2)}/100)×${c.tempo.toFixed(2)}=${c.pB.toFixed(1)}</span></div>
-    </div>`;
+    <div><h4>Game Margin (A−B)</h4>
+    ${mLines.map(l=>`
+      <div class="ou-row"><span class="ou-line">A −${l+.5}</span><span class="ou-pct">${pOver(margins,l+.5).toFixed(1)}%</span><span class="ou-am">${toAm(pOver(margins,l+.5)/100)}</span></div>
+      <div class="ou-row"><span class="ou-line">A +${l+.5}</span><span class="ou-pct">${pUnder(margins,l+.5).toFixed(1)}%</span><span class="ou-am">${toAm(pUnder(margins,l+.5)/100)}</span></div>`).join('')}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>First Set</h3>
+  <div class="fs-dist-grid">
+    <div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;">Total Games</div>
+      ${fsPoss.map(g=>{const pct=(fsCnt[g]||0)/fsGames.length*100;return`<div class="dist-row">
+        <span class="dr-lbl">${g}</span>
+        <div class="dr-track"><div class="dr-fill fneu" style="width:${(pct/maxFSC*100).toFixed(1)}%"></div></div>
+        <span class="dr-pct">${pct.toFixed(1)}%</span>
+        <span class="dr-odds">${toAm(pct/100)}</span>
+      </div>`;}).join('')}
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:6px;">
+        O 10.5: <b>${pOver(fsGames,10.5).toFixed(1)}%</b> ${toAm(pOver(fsGames,10.5)/100)} &nbsp;·&nbsp; Med: <b>${medFS}</b>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;">Game Margin (A−B)</div>
+      ${[-3.5,-2.5,-1.5,-0.5,0.5,1.5,2.5,3.5].map(l=>{
+        const pct = l > 0 ? pOver(fsMarg, l) : pUnder(fsMarg, l);
+        const maxFM = 35;
+        return`<div class="dist-row">
+          <span class="dr-lbl">${l>0?nameA.split(' ')[0]+' −'+l:nameB.split(' ')[0]+' −'+Math.abs(l)}</span>
+          <div class="dr-track"><div class="dr-fill ${l>0?'fp1':'fp2'}" style="width:${Math.min(100,(pct/maxFM*100)).toFixed(1)}%"></div></div>
+          <span class="dr-pct">${pct.toFixed(1)}%</span>
+          <span class="dr-odds">${toAm(pct/100)}</span>
+        </div>`;}).join('')}
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:6px;">
+        ${nameA} 1st set: <b>${pOver(fsMarg,0).toFixed(1)}%</b> ${toAm(pOver(fsMarg,0)/100)}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Exact Game Margin (Full Match)</h3>
+  <div class="marg-chips">
+    ${[1.5,2.5,3.5,4.5,5.5,6.5].map(line=>{
+      const pctA = pOver(margins, line);   // A wins by more than line
+      const pctB = pUnder(margins, -line); // B wins by more than line
+      return`<div class="mc">
+        <div class="mc-lbl">${nameA.split(' ')[0]} −${line}</div>
+        <div class="mc-val" style="color:var(--p1)">${pctA.toFixed(1)}%</div>
+        <div class="mc-odds">${toAm(pctA/100)}</div>
+      </div>
+      <div class="mc">
+        <div class="mc-lbl">${nameB.split(' ')[0]} −${line}</div>
+        <div class="mc-val" style="color:var(--p2)">${pctB.toFixed(1)}%</div>
+        <div class="mc-odds">${toAm(pctB/100)}</div>
+      </div>`;}).join('')}
+  </div>
+</div>`;
 }
 
-// ═══════════════════════════
-//  RATINGS EDITOR
-// ═══════════════════════════
-let edFilter='';
+// ═══════════════════════════════════════════
+//  DATABASE TABLE
+// ═══════════════════════════════════════════
+let dbFilter='', dbSort='hld', dbAsc=false;
 
-function renderEditor() {
-  let teams=Object.keys(DEFAULTS);
-  if(edFilter) teams=teams.filter(n=>n.toLowerCase().includes(edFilter));
-  // Sort by net rating descending
-  teams.sort((a,b)=>{
-    const dA=getR(a), dB=getR(b);
-    return (dB[0]-dB[1]) - (dA[0]-dA[1]);
+function renderDb() {
+  let rows=[...PLAYERS];
+  if(dbFilter) rows=rows.filter(p=>p[0].toLowerCase().includes(dbFilter));
+  rows.sort((a,b)=>{
+    const key=dbSort==='name'?0:dbSort==='hld'?1:2;
+    return dbAsc?(a[key]>b[key]?1:-1):(a[key]<b[key]?1:-1);
   });
-  document.getElementById('edBody').innerHTML=teams.map(name=>{
-    const d=getR(name);
-    const def=DEFAULTS[name];
-    const net=d[0]-d[1];
-    const mod0=Math.abs(d[0]-def[0])>0.01, mod1=Math.abs(d[1]-def[1])>0.01, mod2=Math.abs(d[2]-def[2])>0.01;
-    const netCol=net>=0
-      ?`<span style="color:var(--green);font-weight:600;">+${net.toFixed(1)}</span>`
-      :`<span style="color:var(--red);font-weight:600;">${net.toFixed(1)}</span>`;
-    return`<tr>
-      <td class="td-name">${name}</td>
-      <td class="td-conf">${def[3]}</td>
-      <td class="td-seed">${def[4]}</td>
-      <td><input class="n-inp${mod0?' dirty':''}" data-n="${name}" data-i="0" type="number" step="0.1" value="${d[0].toFixed(2)}" oninput="onEdit(this)"></td>
-      <td><input class="n-inp${mod1?' dirty':''}" data-n="${name}" data-i="1" type="number" step="0.1" value="${d[1].toFixed(2)}" oninput="onEdit(this)"></td>
-      <td><input class="n-inp${mod2?' dirty':''}" data-n="${name}" data-i="2" type="number" step="0.1" value="${d[2].toFixed(2)}" oninput="onEdit(this)"></td>
-      <td style="font-family:var(--mono);font-size:11px;text-align:right;">${netCol}</td>
+  document.getElementById('dbCount').textContent=`${rows.length} players`;
+  const defMap=Object.fromEntries(DEFAULT_PLAYERS.map(p=>[p[0],[p[1],p[2]]]));
+  const isCustom=name=>!defMap[name];
+  document.getElementById('dbBody').innerHTML=rows.map(p=>{
+    const def=defMap[p[0]];
+    const modH=def?Math.abs(p[1]-def[0])>0.0001:false;
+    const modB=def?Math.abs(p[2]-def[1])>0.0001:false;
+    const custom=isCustom(p[0]);
+    return`<tr${custom?' style="background:#f0fdf4"':''}>
+      <td class="td-name">${p[0]}${custom?'<span style="font-family:var(--mono);font-size:8px;color:var(--green);margin-left:5px;">new</span>':''}</td>
+      <td class="td-mono">${(p[1]*100).toFixed(1)}%</td>
+      <td class="td-mono">${(p[2]*100).toFixed(1)}%</td>
+      <td><div class="hld-bar"><div class="hld-fill" style="width:${Math.max(0,((p[1]-0.6)/(0.95-0.6)*100)).toFixed(1)}%"></div></div></td>
+      <td><div class="hld-bar"><div class="hld-fill brk-fill" style="width:${Math.max(0,((p[2]-0.05)/(0.35-0.05)*100)).toFixed(1)}%"></div></div></td>
+      <td><input class="inp-edit${modH?' mod':''}" data-n="${p[0]}" data-f="1" type="number" step="0.1" min="40" max="99" value="${(p[1]*100).toFixed(1)}" oninput="onDbEdit(this)"></td>
+      <td><input class="inp-edit${modB?' mod':''}" data-n="${p[0]}" data-f="2" type="number" step="0.1" min="1" max="50" value="${(p[2]*100).toFixed(1)}" oninput="onDbEdit(this)"></td>
+      <td><button onclick="deletePlayer('${p[0].replace(/'/g,"\\'")}',this)" style="font-family:var(--mono);font-size:9px;padding:3px 8px;border:1px solid #fecaca;border-radius:4px;background:transparent;color:#b91c1c;cursor:pointer;" title="Remove player">✕</button></td>
     </tr>`;
   }).join('');
 }
 
-function onEdit(inp) {
-  const name=inp.dataset.n, idx=+inp.dataset.i, val=parseFloat(inp.value);
-  if(!isNaN(val)) {
-    R[name][idx]=val;
-    inp.classList.add('dirty');
-    // Live update games in background
-    renderGames();
-    updateCustom();
+function addPlayer() {
+  const name = document.getElementById('newName').value.trim();
+  const hld  = parseFloat(document.getElementById('newHld').value);
+  const brk  = parseFloat(document.getElementById('newBrk').value);
+  const msg  = document.getElementById('addMsg');
+
+  if (!name) { msg.style.color='var(--red)'; msg.textContent='Please enter a player name.'; return; }
+  if (PLAYERS.find(p=>p[0].toLowerCase()===name.toLowerCase())) {
+    msg.style.color='var(--red)'; msg.textContent=`"${name}" already exists — edit them in the table below.`; return;
+  }
+  if (isNaN(hld)||hld<40||hld>99) { msg.style.color='var(--red)'; msg.textContent='Hold% must be between 40–99.'; return; }
+  if (isNaN(brk)||brk<1||brk>50)  { msg.style.color='var(--red)'; msg.textContent='Break% must be between 1–50.'; return; }
+
+  PLAYERS.push([name, hld/100, brk/100]);
+  saveRatings();
+  document.getElementById('newName').value='';
+  document.getElementById('newHld').value='82';
+  document.getElementById('newBrk').value='18';
+  msg.style.color='var(--green)';
+  msg.textContent=`✓ "${name}" added (Hold ${hld}%, Break ${brk}%)`;
+  setTimeout(()=>msg.textContent='', 3000);
+  renderDb();
+}
+
+function deletePlayer(name, btn) {
+  if (!confirm(`Remove "${name}" from the database?`)) return;
+  PLAYERS = PLAYERS.filter(p=>p[0]!==name);
+  // Clear selection if this player was selected
+  if (selA && selA[0]===name) clearSelection('A');
+  if (selB && selB[0]===name) clearSelection('B');
+  saveRatings();
+  renderDb();
+}
+
+function onDbEdit(inp) {
+  const name=inp.dataset.n, field=+inp.dataset.f;
+  const val=parseFloat(inp.value);
+  if(!isNaN(val)){
+    const p=PLAYERS.find(x=>x[0]===name);
+    if(p){ p[field]=val/100; inp.classList.add('mod'); }
   }
 }
 
-function filterEditor() { edFilter=document.getElementById('edSearch').value.toLowerCase(); renderEditor(); }
-
-function downloadCSV() {
-  const rows = [['Team','Conf','Seed','Region','OrtG','DrtG','Tempo','NetRtg']];
-  Object.keys(DEFAULTS).sort().forEach(name => {
-    const d = getR(name);
-    const net = (d[0] - d[1]).toFixed(2);
-    rows.push([name, d[3], d[4], d[5], d[0].toFixed(2), d[1].toFixed(2), d[2].toFixed(2), net]);
-  });
-  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'marchlines-2026-ratings.csv';
-  a.click();
-}
-
-
-function saveAndApply() {
-  const ok=saveR();
-  renderGames(); updateCustom();
-  showPanel('games', document.querySelector('.tab-btn'));
-  const btn=document.querySelector('.ed-btn.save');
-  const orig=btn.textContent;
-  btn.textContent=ok?'Saved ✓':'Applied';
-  btn.style.background='#0d7377';
-  setTimeout(()=>{btn.textContent=orig;btn.style.background='';},1600);
-}
-
-function resetRatings() {
-  if(!confirm('Reset all ratings to default values? This cannot be undone.')) return;
-  initR();
+function filterDb(){dbFilter=document.getElementById('dbSearch').value.toLowerCase();renderDb();}
+function sortDb(col){if(dbSort===col)dbAsc=!dbAsc;else{dbSort=col;dbAsc=col==='name';}renderDb();}
+function resetDb(){
+  if(!confirm('Reset all ratings to default? This will clear saved data.')) return;
+  PLAYERS=DEFAULT_PLAYERS.map(p=>[...p]);
   try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
-  renderEditor();
-  renderGames();
-  updateCustom();
+  renderDb();
+}
+function applyDb(){
+  const saved = saveRatings();
+  renderDb();
+  updateMatchHoldDisplay();
+  showTab('sim', document.querySelector('.tab-btn'));
+  showToast(saved ? 'Ratings saved & applied ✓' : 'Applied (localStorage unavailable)');
 }
 
-// ═══════════════════════════
+function showToast(msg, isError) {
+  let t = document.getElementById('acesimToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'acesimToast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:9999;transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.style.background = isError ? '#7f1d1d' : '#166534';
+  t.style.color = '#fff';
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.style.opacity = '0', 2500);
+}
+
+// ═══════════════════════════════════════════
+//  COURT FACTOR & NAME EDIT
+// ═══════════════════════════════════════════
+function onCourtFactor() {
+  courtFactor = parseFloat(document.getElementById('courtFactor').value);
+  const el = document.getElementById('cfVal');
+  el.textContent = (courtFactor > 0 ? '+' : '') + courtFactor.toFixed(1) + '%';
+  el.style.color = courtFactor > 0 ? '#059669' : courtFactor < 0 ? '#b91c1c' : 'var(--teal)';
+  updateMatchHoldDisplay();
+}
+
+function onNameEdit(side) {
+  const val = document.getElementById('selName'+side).value;
+  if (side === 'A') customNameA = val; else customNameB = val;
+}
+
+// ═══════════════════════════════════════════
 //  CONTROLS
-// ═══════════════════════════
-function showPanel(id, btn) {
+// ═══════════════════════════════════════════
+function showTab(id,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  else document.querySelector(`.tab-btn[onclick*="${id}"]`)?.classList.add('active');
-  document.getElementById('toolbar').style.display=id==='games'?'flex':'none';
-  if(id==='editor') renderEditor();
-  if(id==='custom') updateCustom();
+  if(btn)btn.classList.add('active');
+  else document.querySelector(`.tab-btn[onclick*="${id}"]`).classList.add('active');
+  if(id==='db')renderDb();
 }
-
-function setFilter(f, btn) {
-  curFilter=f;
-  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+function setSurface(s,btn){
+  surface=s;
+  document.querySelectorAll('.surf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  curSort='default';
-  renderGames();
+  const c={hard:'#2d5a27',clay:'#7a3210',grass:'#1a5c38'};
+  document.querySelector('header').style.background=c[s];
 }
-function setSort(s, btn) {
-  curSort=s;
-  renderGames();
+function setFmt(f,btn){
+  matchFmt=f;
+  document.querySelectorAll('.fmt-btn').forEach(b=>{if(b.onclick&&b.onclick.toString().includes('setFmt'))b.classList.remove('active');});
+  btn.classList.add('active');
 }
-function updatePen() {
-  penalty=parseFloat(document.getElementById('penSlider').value);
-  document.getElementById('penVal').textContent='−'+penalty.toFixed(1);
-  renderGames(); updateCustom();
+function setFS(r,btn){
+  finalSet=r;
+  document.querySelectorAll('.fmt-btn').forEach(b=>{if(b.onclick&&b.onclick.toString().includes('setFS'))b.classList.remove('active');});
+  btn.classList.add('active');
 }
-function recalcAll() {
-  tournMode=document.getElementById('tMode').checked;
-  document.getElementById('modeLabel').textContent=tournMode?'ON':'OFF';
-  document.getElementById('modeLabel').style.color=tournMode?'#7dd3fc':'rgba(255,255,255,.3)';
-  renderGames(); updateCustom();
+function updSl(id,valId,sign){
+  const v=parseFloat(document.getElementById(id).value);
+  document.getElementById(valId).textContent=sign+(v*100).toFixed(1)+'%';
 }
-
-// ═══════════════════════════
-//  INIT
-// ═══════════════════════════
-loadR();
-buildCustomDropdowns();
-renderGames();
+const DEF_MOM={momAwin:0.012,momAwinB:0.012,momBwin:0.016,momBwinA:0.016,breakPen:0.008,holdBounce:0.001};
+const DEF_SIGN={momAwin:'+',momAwinB:'−',momBwin:'+',momBwinA:'−',breakPen:'',holdBounce:'+'};
+function resetMom(){Object.entries(DEF_MOM).forEach(([id,v])=>{document.getElementById(id).value=v;document.getElementById('sv_'+id).textContent=DEF_SIGN[id]+(v*100).toFixed(1)+'%';});}
+function zeroMom(){Object.keys(DEF_MOM).forEach(id=>{document.getElementById(id).value=0;document.getElementById('sv_'+id).textContent='0.0%';});}
+// Load saved ratings on startup
+(function(){
+  if(loadRatings()){
+    console.log('AceSim: loaded saved ratings for', PLAYERS.length, 'players');
+  }
+})();
 </script>
 </body>
 </html>
