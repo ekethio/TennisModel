@@ -207,6 +207,7 @@ table.db-tbl td{padding:5px 10px;vertical-align:middle;}
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="showTab('sim',this)">Simulate</button>
+  <button class="tab-btn" onclick="showTab('miami',this)">Miami Open</button>
   <button class="tab-btn" onclick="showTab('db',this)">Player Database</button>
 </div>
 
@@ -349,6 +350,21 @@ table.db-tbl td{padding:5px 10px;vertical-align:middle;}
   <div id="results"></div>
 </div>
 
+
+<!-- MIAMI OPEN TAB -->
+<div id="tab-miami" class="panel">
+  <div class="card" style="margin-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <h2 style="margin-bottom:0;">ATP Miami Open 2026 &ndash; R1</h2>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="fmt-btn active" style="border-radius:4px;border:1px solid var(--border2);" onclick="setMiamiFilter('all',this)">All</button>
+        <button class="fmt-btn" style="border-radius:4px;border:1px solid var(--border2);" onclick="setMiamiFilter('skip',this)">Has Lines Only</button>
+      </div>
+    </div>
+    <div id="miamiGames" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;"></div>
+  </div>
+</div>
+
 <!-- DATABASE TAB -->
 <div id="tab-db" class="panel">
 
@@ -468,22 +484,14 @@ const LG_BRK = 0.185; // league avg break rate → matchHld = hld - oppBrk + LG_
 
 // ── PERSISTENCE ─────────────────────────────
 const STORAGE_KEY = 'acesim_players_v1';
-function saveRatings() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(PLAYERS));
-    return true;
-  } catch(e) { return false; }
-}
-function loadRatings() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return false;
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed) || !parsed.every(p => Array.isArray(p) && p.length >= 3 && typeof p[0]==='string' && typeof p[1]==='number' && typeof p[2]==='number')) return false;
-    PLAYERS = parsed;
-    return true;
-  } catch(e) { return false; }
-}
+async function saveCloud(){try{if(!window.storage)return false;await window.storage.set(STORAGE_KEY,JSON.stringify(PLAYERS));return true;}catch(e){return false;}}
+async function loadCloud(){try{if(!window.storage)return false;const r=await window.storage.get(STORAGE_KEY);if(!r)return false;const p=JSON.parse(r.value);if(!Array.isArray(p)||!p.every(x=>Array.isArray(x)&&x.length>=3&&typeof x[0]==='string'))return false;PLAYERS=p;return true;}catch(e){return false;}}
+
+async function saveRatings(){saveLocal();return await saveCloud();}
+function saveLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(PLAYERS));return true;}catch(e){return false;}}
+async function loadRatings(){const ok=await loadCloud();if(ok)return true;return loadLocal();}
+function loadLocal(){try{const s=localStorage.getItem(STORAGE_KEY);if(!s)return false;const p=JSON.parse(s);if(!Array.isArray(p)||!p.every(x=>Array.isArray(x)&&x.length>=3&&typeof x[0]==='string'))return false;PLAYERS=p;return true;}catch(e){return false;}}
+// loadRatings already defined above
 
 // Live editable ratings — start from defaults, then load any saved overrides
 let PLAYERS = DEFAULT_PLAYERS.map(p => [...p]);
@@ -981,6 +989,7 @@ function renderDb() {
       <td class="td-name">${p[0]}${custom?'<span style="font-family:var(--mono);font-size:8px;color:var(--green);margin-left:5px;">new</span>':''}</td>
       <td class="td-mono">${(p[1]*100).toFixed(1)}%</td>
       <td class="td-mono">${(p[2]*100).toFixed(1)}%</td>
+      <td class="td-mono" style="font-weight:600;color:var(--teal)">${((p[1]+p[2])*100).toFixed(1)}%</td>
       <td><div class="hld-bar"><div class="hld-fill" style="width:${Math.max(0,((p[1]-0.6)/(0.95-0.6)*100)).toFixed(1)}%"></div></div></td>
       <td><div class="hld-bar"><div class="hld-fill brk-fill" style="width:${Math.max(0,((p[2]-0.05)/(0.35-0.05)*100)).toFixed(1)}%"></div></div></td>
       <td><input class="inp-edit${modH?' mod':''}" data-n="${p[0]}" data-f="1" type="number" step="0.1" min="40" max="99" value="${(p[1]*100).toFixed(1)}" oninput="onDbEdit(this)"></td>
@@ -1004,7 +1013,7 @@ function addPlayer() {
   if (isNaN(brk)||brk<1||brk>50)  { msg.style.color='var(--red)'; msg.textContent='Break% must be between 1–50.'; return; }
 
   PLAYERS.push([name, hld/100, brk/100]);
-  saveRatings();
+  saveRatings().then(()=>{});
   document.getElementById('newName').value='';
   document.getElementById('newHld').value='82';
   document.getElementById('newBrk').value='18';
@@ -1020,7 +1029,7 @@ function deletePlayer(name, btn) {
   // Clear selection if this player was selected
   if (selA && selA[0]===name) clearSelection('A');
   if (selB && selB[0]===name) clearSelection('B');
-  saveRatings();
+  saveRatings().then(()=>{});
   renderDb();
 }
 
@@ -1041,8 +1050,8 @@ function resetDb(){
   try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
   renderDb();
 }
-function applyDb(){
-  const saved = saveRatings();
+async function applyDb(){
+  const saved = await saveRatings();
   renderDb();
   updateMatchHoldDisplay();
   showTab('sim', document.querySelector('.tab-btn'));
@@ -1117,12 +1126,86 @@ const DEF_MOM={momAwin:0.012,momAwinB:0.012,momBwin:0.016,momBwinA:0.016,breakPe
 const DEF_SIGN={momAwin:'+',momAwinB:'−',momBwin:'+',momBwinA:'−',breakPen:'',holdBounce:'+'};
 function resetMom(){Object.entries(DEF_MOM).forEach(([id,v])=>{document.getElementById(id).value=v;document.getElementById('sv_'+id).textContent=DEF_SIGN[id]+(v*100).toFixed(1)+'%';});}
 function zeroMom(){Object.keys(DEF_MOM).forEach(id=>{document.getElementById(id).value=0;document.getElementById('sv_'+id).textContent='0.0%';});}
+
+// === MIAMI OPEN ===
+const MIAMI_MATCHES = [
+  {p1:"Marozsan",   p2:"Fonseca"},
+  {p1:"GMP",        p2:"Carabelli"},
+  {p1:"Giron",      p2:"Q/LL"},
+  {p1:"Duckworth",  p2:"BautistaAgut"},
+  {p1:"EthanQ",     p2:"Hurcacz"},
+  {p1:"Opelka",     p2:"Borges"},
+  {p1:"Shapovalov", p2:"Botic"},
+  {p1:"Bergs",      p2:"Brooksby"},
+  {p1:"Zheng",      p2:"Mannarino"},
+  {p1:"Collignom",  p2:"Dimitrov"},
+  {p1:"Muller",     p2:"Berettini"},
+  {p1:"Q/LL",       p2:"Navone"},
+  {p1:"Blanch",     p2:"Struff"},
+  {p1:"Tsitsipas",  p2:"Q/LL"},
+  {p1:"Arnaldi",    p2:"Shevchenko"},
+  {p1:"Diallo",     p2:"Yibing"},
+  {p1:"Royer",      p2:"Q/LL"},
+  {p1:"Kovacevic",  p2:"Sakamoto"},
+  {p1:"Halys",      p2:"Q/LL"},
+  {p1:"Machjzak",   p2:"Kecmanovic"},
+  {p1:"Cilic",      p2:"Popyrin"},
+  {p1:"MartinDamm", p2:"Fearnley"},
+  {p1:"Q/LL",       p2:"Fuscovics"},
+  {p1:"Atmane",     p2:"Altmaier"},
+  {p1:"Cazaux",     p2:"Q/LL"},
+  {p1:"Q/LL",       p2:"Baez"},
+  {p1:"Tabilo",     p2:"Comesana"},
+  {p1:"Michelsen",  p2:"Q/LL"},
+  {p1:"Emilio",     p2:"Machac"},
+  {p1:"Q/LL",       p2:"Dzhumur"},
+];
+let miamiFilter='all';
+function setMiamiFilter(f,btn){
+  miamiFilter=f;
+  document.querySelectorAll('#tab-miami .fmt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMiami();
+}
+function renderMiami(){
+  const cont=document.getElementById('miamiGames');
+  if(!cont)return;
+  let matches=MIAMI_MATCHES;
+  if(miamiFilter==='skip') matches=matches.filter(m=>getPlayer(m.p1)&&getPlayer(m.p2));
+  cont.innerHTML=matches.map(m=>{
+    const pA=getPlayer(m.p1), pB=getPlayer(m.p2);
+    const hasLine=pA&&pB;
+    let bottom='';
+    if(hasLine){
+      const hA=calcMatchHold(pA[1],pB[2]);
+      const hB=calcMatchHold(pB[1],pA[2]);
+      bottom='<div style="background:#1e3a5f;border-radius:0 0 8px 8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;">'
+        +'<div style="text-align:center;flex:1;"><div style="font-family:var(--mono);font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:2px;">'+m.p1+' hold</div>'
+        +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:#7dd3fc;">'+(hA*100).toFixed(1)+'%</div></div>'
+        +'<div style="width:1px;height:28px;background:rgba(255,255,255,.15);"></div>'
+        +'<div style="text-align:center;flex:1;"><div style="font-family:var(--mono);font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:2px;">'+m.p2+' hold</div>'
+        +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:#c4b5fd;">'+(hB*100).toFixed(1)+'%</div></div>'
+        +'</div>';
+    } else {
+      const why=(m.p1==='Q/LL'||m.p2==='Q/LL')?'Qualifier TBD':(!pA&&!pB)?'Neither player in DB':!pA?m.p1+' not in DB':m.p2+' not in DB';
+      bottom='<div style="padding:6px 10px;background:var(--bg2);text-align:center;font-family:var(--mono);font-size:8.5px;color:var(--muted);border-radius:0 0 8px 8px;">'+why+'</div>';
+    }
+    const sA=pA?'font-weight:600;color:var(--text);':'color:var(--muted);';
+    const sB=pB?'font-weight:600;color:var(--text);':'color:var(--muted);';
+    return '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--sh);">'
+      +'<div style="background:var(--sf2);padding:6px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">'
+      +'<span style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">R1</span>'
+      +(hasLine?'<span style="font-family:var(--mono);font-size:8px;color:var(--teal);">lines available</span>':'')
+      +'</div>'
+      +'<div style="padding:9px 10px;">'
+      +'<div style="font-size:13px;'+sA+'margin-bottom:4px;">'+m.p1+'</div>'
+      +'<div style="font-family:var(--mono);font-size:8.5px;color:var(--muted);margin-bottom:4px;">vs</div>'
+      +'<div style="font-size:13px;'+sB+'">'+m.p2+'</div>'
+      +'</div>'+bottom+'</div>';
+  }).join('');
+}
 // Load saved ratings on startup
-(function(){
-  if(loadRatings()){
-    console.log('AceSim: loaded saved ratings for', PLAYERS.length, 'players');
-  }
-})();
+(async function(){const ok=await loadRatings();if(ok)console.log('AceSim: loaded',PLAYERS.length,'players');renderMiami();})();
 </script>
 </body>
 </html>
