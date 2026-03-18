@@ -358,7 +358,9 @@ table.db-tbl td{padding:5px 10px;vertical-align:middle;}
       <h2 style="margin-bottom:0;">ATP Miami Open 2026 &ndash; R1</h2>
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="fmt-btn active" style="border-radius:4px;border:1px solid var(--border2);" onclick="setMiamiFilter('all',this)">All</button>
-        <button class="fmt-btn" style="border-radius:4px;border:1px solid var(--border2);" onclick="setMiamiFilter('skip',this)">Has Lines Only</button>
+        <button class="fmt-btn" style="border-radius:4px;border:1px solid var(--border2);" onclick="setMiamiFilter('Q',this)">Qualifying</button>
+        <button class="fmt-btn" style="border-radius:4px;border:1px solid var(--border2);" onclick="setMiamiFilter('R1',this)">Round 1</button>
+        <button class="fmt-btn" style="border-radius:4px;border:1px solid var(--border2);" onclick="setMiamiFilter('skip',this)">Has Lines</button>
       </div>
     </div>
     <div id="miamiGames" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;"></div>
@@ -408,6 +410,7 @@ table.db-tbl td{padding:5px 10px;vertical-align:middle;}
           <th onclick="sortDb('name')">Player ↕</th>
           <th onclick="sortDb('hld')">Hold% ↕</th>
           <th onclick="sortDb('brk')">Break% ↕</th>
+          <th onclick="sortDb('total')" style="color:var(--teal)">Total% ↕</th>
           <th>Hold bar</th>
           <th>Break bar</th>
           <th>Edit Hold%</th>
@@ -441,14 +444,14 @@ const DEFAULT_PLAYERS = [
   ["Fokina",0.805,0.220],["Cerundolo",0.780,0.245],["Lehecka",0.845,0.180],
   ["Khachanov",0.850,0.170],["Nakashima",0.860,0.160],["Munar",0.805,0.210],
   ["Tiafoe",0.805,0.210],["Humbert",0.845,0.170],["Tsitsipas",0.845,0.165],
-  ["Norrie",0.805,0.205],["Maroszan",0.810,0.200],["Shapovalov",0.795,0.210],
+  ["Norrie",0.805,0.205],["Fabian Marozsan",0.810,0.200],["Shapovalov",0.795,0.210],
   ["Michelsen",0.830,0.175],["Collignom",0.830,0.170],["Vacherot",0.840,0.155],
   ["Medjedovic",0.835,0.160],["Berettini",0.855,0.140],["Cazaux",0.815,0.180],
   ["Kecmanovic",0.795,0.195],["Spizziri",0.775,0.210],["Hurcacz",0.880,0.100],
   ["Cobolli",0.795,0.185],["Rinderknech",0.855,0.125],["Giron",0.795,0.180],
   ["Griekspoor",0.845,0.130],["Acche",0.770,0.205],["Cilic",0.840,0.135],
   ["Sonego",0.810,0.160],["Moutet",0.740,0.230],["Brooksby",0.765,0.205],
-  ["Yibing",0.785,0.185],["Zvadja",0.795,0.175],["Darderi",0.780,0.190],
+  ["Yibing",0.785,0.185],["Zachary Zvadja",0.795,0.175],["Darderi",0.780,0.190],
   ["Botic",0.790,0.175],["Machjzak",0.775,0.190],["JordanT",0.780,0.185],
   ["Diallo",0.800,0.165],["Tabilo",0.820,0.145],["Jodar",0.745,0.220],
   ["Borges",0.800,0.160],["Zheng",0.775,0.185],["GMP",0.885,0.075],
@@ -473,7 +476,7 @@ const DEFAULT_PLAYERS = [
   ["Shevchenko",0.745,0.155],["Altmaier",0.760,0.140],["DanielAguilar",0.710,0.190],
   ["Navone",0.705,0.190],["Buse",0.710,0.185],["Duckworth",0.780,0.115],
   ["Maestrelli",0.760,0.130],["Misolic",0.750,0.135],["Blanch",0.750,0.130],
-  ["Schoolkate",0.775,0.105],["Carabelli",0.705,0.170],["Muller",0.715,0.155],
+  ["Tristan Schoolkate",0.775,0.105],["Carabelli",0.705,0.170],["Muller",0.715,0.155],
   ["Bashiavilli",0.730,0.130],["Elias",0.715,0.145],["Sakamoto",0.755,0.105],
   ["Martinez",0.690,0.160],["Burruchaga",0.645,0.205],["TrevorSvadja",0.670,0.175],
   ["Mochuiziki",0.660,0.180],["FredericoG",0.700,0.135],["Krueger",0.685,0.145],
@@ -497,7 +500,21 @@ function loadLocal(){try{const s=localStorage.getItem(STORAGE_KEY);if(!s)return 
 let PLAYERS = DEFAULT_PLAYERS.map(p => [...p]);
 
 function getPlayer(name) {
-  return PLAYERS.find(p => p[0] === name);
+  if (!name || name === 'Q/LL') return null;
+  // Exact match first
+  let p = PLAYERS.find(x => x[0] === name);
+  if (p) return p;
+  // Case-insensitive fallback
+  const low = name.toLowerCase();
+  p = PLAYERS.find(x => x[0].toLowerCase() === low);
+  if (p) return p;
+  // Last-name match fallback (handles "Fabian Marozsan" finding "Marozsan" etc)
+  const parts = name.split(' ');
+  const last = parts[parts.length-1].toLowerCase();
+  return PLAYERS.find(x => {
+    const xparts = x[0].split(' ');
+    return xparts[xparts.length-1].toLowerCase() === last;
+  }) || null;
 }
 
 function calcMatchHold(hld, oppBrk) {
@@ -974,8 +991,8 @@ function renderDb() {
   let rows=[...PLAYERS];
   if(dbFilter) rows=rows.filter(p=>p[0].toLowerCase().includes(dbFilter));
   rows.sort((a,b)=>{
-    const key=dbSort==='name'?0:dbSort==='hld'?1:2;
-    return dbAsc?(a[key]>b[key]?1:-1):(a[key]<b[key]?1:-1);
+    const getVal = p => dbSort==='name' ? p[0] : dbSort==='hld' ? p[1] : dbSort==='brk' ? p[2] : p[1]+p[2];
+    return dbAsc?(getVal(a)>getVal(b)?1:-1):(getVal(a)<getVal(b)?1:-1);
   });
   document.getElementById('dbCount').textContent=`${rows.length} players`;
   const defMap=Object.fromEntries(DEFAULT_PLAYERS.map(p=>[p[0],[p[1],p[2]]]));
@@ -1129,36 +1146,52 @@ function zeroMom(){Object.keys(DEF_MOM).forEach(id=>{document.getElementById(id)
 
 // === MIAMI OPEN ===
 const MIAMI_MATCHES = [
-  {p1:"Marozsan",   p2:"Fonseca"},
-  {p1:"GMP",        p2:"Carabelli"},
-  {p1:"Giron",      p2:"Q/LL"},
-  {p1:"Duckworth",  p2:"BautistaAgut"},
-  {p1:"EthanQ",     p2:"Hurcacz"},
-  {p1:"Opelka",     p2:"Borges"},
-  {p1:"Shapovalov", p2:"Botic"},
-  {p1:"Bergs",      p2:"Brooksby"},
-  {p1:"Zheng",      p2:"Mannarino"},
-  {p1:"Collignom",  p2:"Dimitrov"},
-  {p1:"Muller",     p2:"Berettini"},
-  {p1:"Q/LL",       p2:"Navone"},
-  {p1:"Blanch",     p2:"Struff"},
-  {p1:"Tsitsipas",  p2:"Q/LL"},
-  {p1:"Arnaldi",    p2:"Shevchenko"},
-  {p1:"Diallo",     p2:"Yibing"},
-  {p1:"Royer",      p2:"Q/LL"},
-  {p1:"Kovacevic",  p2:"Sakamoto"},
-  {p1:"Halys",      p2:"Q/LL"},
-  {p1:"Machjzak",   p2:"Kecmanovic"},
-  {p1:"Cilic",      p2:"Popyrin"},
-  {p1:"MartinDamm", p2:"Fearnley"},
-  {p1:"Q/LL",       p2:"Fuscovics"},
-  {p1:"Atmane",     p2:"Altmaier"},
-  {p1:"Cazaux",     p2:"Q/LL"},
-  {p1:"Q/LL",       p2:"Baez"},
-  {p1:"Tabilo",     p2:"Comesana"},
-  {p1:"Michelsen",  p2:"Q/LL"},
-  {p1:"Emilio",     p2:"Machac"},
-  {p1:"Q/LL",       p2:"Dzhumur"},
+  // QUALIFYING (today, March 17-18)
+  {r:"Q",  p1:"Buse",          p2:"Q/LL"},
+  {r:"Q",  p1:"Pinnington",    p2:"Wong"},
+  {r:"Q",  p1:"Hanfman",       p2:"Q/LL"},
+  {r:"Q",  p1:"Tirante",       p2:"Q/LL"},
+  {r:"Q",  p1:"Landaluce",     p2:"Mcdonald"},
+  {r:"Q",  p1:"Vukic",         p2:"Q/LL"},
+  {r:"Q",  p1:"Garin",         p2:"Sho"},
+  {r:"Q",  p1:"Walton",        p2:"Riijikata"},
+  {r:"Q",  p1:"Bellucci",      p2:"Maestrelli"},
+  {r:"Q",  p1:"Kypson",        p2:"Shimabukuro"},
+  {r:"Q",  p1:"Blockx",        p2:"ChristopherO"},
+  {r:"Q",  p1:"Burruchaga",    p2:"Tristan Schoolkate"},
+  {r:"Q",  p1:"Zachary Zvadja",p2:"Scrcina"},
+  {r:"Q",  p1:"Jodar",         p2:"Bonzi"},
+  // ROUND 1 (March 18-19)
+  {r:"R1", p1:"Fabian Marozsan",p2:"Fonseca"},
+  {r:"R1", p1:"GMP",           p2:"Carabelli"},
+  {r:"R1", p1:"Giron",         p2:"Q/LL"},
+  {r:"R1", p1:"Duckworth",     p2:"BautistaAgut"},
+  {r:"R1", p1:"EthanQ",        p2:"Hurcacz"},
+  {r:"R1", p1:"Opelka",        p2:"Borges"},
+  {r:"R1", p1:"Shapovalov",    p2:"Botic"},
+  {r:"R1", p1:"Bergs",         p2:"Brooksby"},
+  {r:"R1", p1:"Zheng",         p2:"Mannarino"},
+  {r:"R1", p1:"Collignom",     p2:"Dimitrov"},
+  {r:"R1", p1:"Muller",        p2:"Berettini"},
+  {r:"R1", p1:"Q/LL",          p2:"Navone"},
+  {r:"R1", p1:"Blanch",        p2:"Struff"},
+  {r:"R1", p1:"Tsitsipas",     p2:"Q/LL"},
+  {r:"R1", p1:"Arnaldi",       p2:"Shevchenko"},
+  {r:"R1", p1:"Diallo",        p2:"Yibing"},
+  {r:"R1", p1:"Royer",         p2:"Q/LL"},
+  {r:"R1", p1:"Kovacevic",     p2:"Sakamoto"},
+  {r:"R1", p1:"Halys",         p2:"Q/LL"},
+  {r:"R1", p1:"Machjzak",      p2:"Kecmanovic"},
+  {r:"R1", p1:"Cilic",         p2:"Popyrin"},
+  {r:"R1", p1:"MartinDamm",    p2:"Fearnley"},
+  {r:"R1", p1:"Q/LL",          p2:"Fuscovics"},
+  {r:"R1", p1:"Atmane",        p2:"Altmaier"},
+  {r:"R1", p1:"Cazaux",        p2:"Q/LL"},
+  {r:"R1", p1:"Q/LL",          p2:"Baez"},
+  {r:"R1", p1:"Tabilo",        p2:"Comesana"},
+  {r:"R1", p1:"Michelsen",     p2:"Q/LL"},
+  {r:"R1", p1:"Emilio",        p2:"Machac"},
+  {r:"R1", p1:"Q/LL",          p2:"Dzhumur"},
 ];
 let miamiFilter='all';
 function setMiamiFilter(f,btn){
@@ -1172,6 +1205,8 @@ function renderMiami(){
   if(!cont)return;
   let matches=MIAMI_MATCHES;
   if(miamiFilter==='skip') matches=matches.filter(m=>getPlayer(m.p1)&&getPlayer(m.p2));
+  else if(miamiFilter==='Q') matches=matches.filter(m=>m.r==='Q');
+  else if(miamiFilter==='R1') matches=matches.filter(m=>m.r==='R1');
   cont.innerHTML=matches.map(m=>{
     const pA=getPlayer(m.p1), pB=getPlayer(m.p2);
     const hasLine=pA&&pB;
@@ -1194,7 +1229,7 @@ function renderMiami(){
     const sB=pB?'font-weight:600;color:var(--text);':'color:var(--muted);';
     return '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--sh);">'
       +'<div style="background:var(--sf2);padding:6px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">'
-      +'<span style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">R1</span>'
+      +'<span style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">'+m.r+'</span>'
       +(hasLine?'<span style="font-family:var(--mono);font-size:8px;color:var(--teal);">lines available</span>':'')
       +'</div>'
       +'<div style="padding:9px 10px;">'
